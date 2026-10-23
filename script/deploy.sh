@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deploys BulwarkFactory, creates your vault, opens a loan, and sets the rescue rule.
 # Usage: bash script/deploy.sh   (reads PRIVATE_KEY from .env or asks)
-# Optional env: COLL (BTC, default 0.045), BORROW (MUSD, default 2300), RESERVE (MUSD kept, default 450),
+# Sizes the loan to your balance automatically (keeps a little BTC for gas, aims for ~170%).
+# Optional overrides: COLL (BTC), BORROW (MUSD), RESERVE (MUSD kept in the vault), GAS_KEEP (BTC),
 #               TRIGGER (%, default 160), TARGET (%, default 175), FEE_BPS (default 50), FACTORY (reuse one)
 set -euo pipefail
 RPC=${RPC:-https://rpc.test.mezo.org}
@@ -11,7 +12,7 @@ MUSD=0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503
 PF=0x86bCF0841622a5dAC14A313a15f96A95421b9366
 HH=0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6
 ST=0x722E4D24FD6Ff8b0AC679450F3D91294607268fA
-COLL=${COLL:-0.045}; BORROW=${BORROW:-2300}; RESERVE=${RESERVE:-450}
+COLL=${COLL:-}; BORROW=${BORROW:-}; RESERVE=${RESERVE:-}
 TRIGGER=${TRIGGER:-160}; TARGET=${TARGET:-175}; FEE_BPS=${FEE_BPS:-50}
 
 export PATH="$PATH:$HOME/.foundry/bin:${FOUNDRY_DIR:-$HOME/.foundry}/bin"
@@ -32,6 +33,39 @@ hints() { local nicr h; nicr=$(cast call $HH "computeNominalCR(uint256,uint256)(
 icr() { local p; p=$(cast call $PF "fetchPrice()(uint256)" --rpc-url $RPC | cut -d' ' -f1)
   cast call $TM "getCurrentICR(address,uint256)(uint256)" $1 $p --rpc-url $RPC | cut -d' ' -f1 | awk '{printf "%.1f%%", $1/1e16}'; }
 
+# ---- size the loan to the wallet ----
+PRICE=$(cast call $PF "fetchPrice()(uint256)" --rpc-url $RPC | cut -d' ' -f1)
+BAL=$(cast balance $ME --rpc-url $RPC)
+FEE_RATE=$(cast call $BO "getBorrowingFee(uint256)(uint256)" 1000000000000000000000000 --rpc-url $RPC | cut -d' ' -f1)
+GASP=$(cast gas-price --rpc-url $RPC)
+PLAN=$(python3 - "$PRICE" "$BAL" "$FEE_RATE" "$GASP" "$COLL" "$BORROW" "$RESERVE" <<'PY'
+import sys
+E=10**18
+price,bal,fee_rate,gasp=map(int,sys.argv[1:5]); coll,borrow,reserve=sys.argv[5:8]
+import os
+gas_keep=int(float(os.environ["GAS_KEEP"])*E) if os.environ.get("GAS_KEEP") else max(10**15, gasp*15_000_000)  # BTC kept for gas
+fr=fee_rate/(10**6*E)                                  # fee per MUSD borrowed
+coll=int(float(coll)*E) if coll else bal-gas_keep
+if coll<=0: sys.exit("Balance too low. Claim BTC at https://faucet.test.mezo.org/")
+value=coll*price/E/E                                   # USD
+if borrow: b=float(borrow)
+else:
+    b=None
+    for icr in (1.70,1.65,1.60,1.55,1.50):             # highest safe ratio that still leaves rescue room
+        cand=(value/icr-200)/(1+fr)
+        if cand*(1+fr)-1800>=150: b=cand; break
+    if b is None:
+        need=1.50*(1800+150+200)/(price/E)+gas_keep/E
+        sys.exit(f"Not enough BTC: ${value:,.0f} of collateral. You need about {need:.3f} BTC in the wallet. Faucet: https://faucet.test.mezo.org/")
+room=b*(1+fr)-1800                                    # Mezo keeps 1,800 MUSD net debt minimum
+r=float(reserve) if reserve else min(450.0, room)
+r=min(r,b)
+print(coll, int(b*E), int(r*E))
+PY
+) || exit 1
+read -r COLL_WEI BORROW_WEI RESERVE_WEI <<<"$PLAN"
+COLL=$(cast from-wei $COLL_WEI)
+echo "Plan: ${COLL} BTC collateral, borrow $(cast from-wei $BORROW_WEI | cut -c1-8) MUSD, keep $(cast from-wei $RESERVE_WEI | cut -c1-6) MUSD as rescue reserve"
 if [ -z "${FACTORY:-}" ]; then
   FACTORY=$(forge create src/BulwarkFactory.sol:BulwarkFactory --rpc-url $RPC --private-key $PRIVATE_KEY --broadcast --legacy \
     --constructor-args $BO $TM $PF $MUSD | awk '/Deployed to:/{print $3}')
@@ -44,7 +78,6 @@ if [ "$VAULT" = "0x0000000000000000000000000000000000000000" ]; then
 fi
 echo "Your vault: $VAULT"
 
-COLL_WEI=$(cast to-wei $COLL); BORROW_WEI=$(cast to-wei $BORROW); RESERVE_WEI=$(cast to-wei $RESERVE)
 FEE=$(cast call $BO "getBorrowingFee(uint256)(uint256)" $BORROW_WEI --rpc-url $RPC | cut -d' ' -f1)
 DEBT=$(python3 -c "print($BORROW_WEI + 200*10**18 + $FEE)")
 send $VAULT "openLoan(uint256,uint256,address,address)" $BORROW_WEI $RESERVE_WEI $(hints $COLL_WEI $DEBT) --value ${COLL}ether
