@@ -88,15 +88,17 @@ const warned = new Set<string>();
 async function checkVault(vault: Address) {
   const { result } = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "previewRescue", account });
   const [canRescue, icr, repay] = result;
-  const [trigger] = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "rule" });
+  const [trigger, target] = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "rule" });
   if (trigger === 0n) return;
 
   if (!canRescue) {
-    if (icr < BigInt(trigger) + warnMargin && icr > 0n && !warned.has(vault)) {
-      warned.add(vault);
+    // Warn when the loan drifts toward its trigger, but never right after a rescue left it at its target.
+    const near = icr < BigInt(trigger) + warnMargin && icr < BigInt(target) - 5n * 10n ** 15n;
+    if (near && icr > 0n && !warned.has(vault.toLowerCase())) {
+      warned.add(vault.toLowerCase());
       await telegram(`⚠️ Bulwark vault ${short(vault)} is at ${pct(icr)}, close to its ${pct(BigInt(trigger))} rescue line.`);
     } else if (icr >= BigInt(trigger) + warnMargin) {
-      warned.delete(vault);
+      warned.delete(vault.toLowerCase());
     }
     return;
   }
@@ -108,17 +110,35 @@ async function checkVault(vault: Address) {
   // Simulate first: another keeper may have got there already.
   const sim = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "rescue", args: [up, low], account });
   const hash = await wallet.writeContract({ ...sim.request, gas: 3_000_000n });
-  const receipt = await pub.waitForTransactionReceipt({ hash });
-  if (receipt.status !== "success") throw new Error(`rescue tx failed ${hash}`);
+  log(`rescue sent for ${vault}: tx ${hash} (the alert goes out when the Rescued event lands)`);
+  try {
+    const receipt = await pub.waitForTransactionReceipt({ hash, timeout: 120_000 });
+    if (receipt.status !== "success") log(`rescue tx reverted ${hash}`);
+  } catch (e) {
+    log(`still waiting on ${hash}: ${(e as Error).message.split("\n")[0]}`);
+  }
+}
 
-  const [, icrAfter] = (await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "previewRescue", account })).result;
-  const fee = sim.result[1];
-  log(`rescued ${vault}: ${pct(icr)} -> ${pct(icrAfter)}, repaid ${musd(sim.result[0])}, fee ${musd(fee)}, tx ${hash}`);
-  await telegram(
-    `🛡️ Bulwark rescued vault ${short(vault)}\n` +
-    `Ratio: ${pct(icr)} → ${pct(icrAfter)}\nRepaid: ${musd(sim.result[0])} from its reserve\n` +
-    `Keeper fee: ${musd(fee)}\n${mezoTestnet.blockExplorers.default.url}/tx/${hash}`,
-  );
+/** Alerts on every Rescued event from any Bulwark vault, whoever the keeper was. Reads the chain, so a slow RPC can't swallow an alert. */
+let lastBlock: bigint | undefined;
+async function watchRescues(vaults: readonly Address[]) {
+  const head = await pub.getBlockNumber();
+  if (lastBlock === undefined) { lastBlock = head; return; }
+  if (head <= lastBlock || vaults.length === 0) return;
+  const from = head - lastBlock > 9_000n ? head - 9_000n : lastBlock + 1n;
+  const logs = await pub.getContractEvents({ address: [...vaults], abi: vaultAbi, eventName: "Rescued", fromBlock: from, toBlock: head });
+  lastBlock = head;
+  for (const l of logs) {
+    const { keeper, icrBefore, icrAfter, repaid, fee } = l.args as { keeper: Address; icrBefore: bigint; icrAfter: bigint; repaid: bigint; fee: bigint };
+    warned.add(l.address.toLowerCase());
+    const by = keeper.toLowerCase() === account.address.toLowerCase() ? "this keeper" : short(keeper);
+    log(`rescued ${l.address}: ${pct(icrBefore)} -> ${pct(icrAfter)}, repaid ${musd(repaid)}, fee ${musd(fee)} to ${by}, tx ${l.transactionHash}`);
+    await telegram(
+      `🛡️ Bulwark rescued vault ${short(l.address)}\n` +
+      `Ratio: ${pct(icrBefore)} → ${pct(icrAfter)}\nRepaid: ${musd(repaid)} from its reserve\n` +
+      `Keeper fee: ${musd(fee)} (${by})\n${mezoTestnet.blockExplorers.default.url}/tx/${l.transactionHash}`,
+    );
+  }
 }
 
 async function tick() {
@@ -129,6 +149,11 @@ async function tick() {
     } catch (e) {
       log(`vault ${v}: ${(e as Error).message.split("\n")[0]}`);
     }
+  }
+  try {
+    await watchRescues(vaults);
+  } catch (e) {
+    log(`rescue watch: ${(e as Error).message.split("\n")[0]}`);
   }
   return vaults.length;
 }
