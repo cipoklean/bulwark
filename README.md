@@ -6,7 +6,7 @@ Bulwark is a safety net for people who borrow MUSD against their BTC on [Mezo](h
 
 Built solo by [@cipoklean](https://github.com/cipoklean) for the Mezo Buildathon (3rd edition, DeFi track).
 
-- **Live dashboard:** https://raw.githack.com/cipoklean/bulwark/main/docs/index.html
+- **Live dashboard:** https://cipoklean.eu.cc/bulwark/
 - **Network:** Mezo testnet (chain 31611)
 - **Factory:** [`0x68Eb65479E3396548113F307d11C8Bd66e59025a`](https://explorer.test.mezo.org/address/0x68Eb65479E3396548113F307d11C8Bd66e59025a)
 - **Example vault:** [`0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5`](https://explorer.test.mezo.org/address/0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5)
@@ -47,7 +47,7 @@ These are written into the contract, not just promised:
 
 ## See it working (2 minutes, no setup)
 
-1. Open the **[live dashboard](https://raw.githack.com/cipoklean/bulwark/main/docs/index.html)**. (githack may show a one-click "Open the page" notice first.)
+1. Open the **[live dashboard](https://cipoklean.eu.cc/bulwark/)**.
 2. You'll see a real vault on Mezo testnet: its health ratio, BTC price, debt, and buffer.
 3. Look at **"What BTC must do"**. It shows the price where a rescue kicks in, where you'd be liquidated without Bulwark, and how much further BTC can fall once the buffer is used.
 4. Scroll to **Activity** to see every on-chain event for that vault, each linked to the explorer.
