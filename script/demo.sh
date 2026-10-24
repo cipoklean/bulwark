@@ -5,6 +5,8 @@
 #         bash script/demo.sh reset      (puts the normal rule back: 160% -> 175%)
 # Needs: cast (Foundry) and the keeper running (bash keeper/start.sh).
 set -euo pipefail
+export PATH="$PATH:$HOME/.foundry/bin:${FOUNDRY_DIR:-$HOME/.foundry}/bin"
+command -v cast >/dev/null || { echo "Installing Foundry (one time)..."; curl -sL https://foundry.paradigm.xyz | bash >/dev/null; ~/.foundry/bin/foundryup >/dev/null; }
 cd "$(dirname "$0")/.."
 RPC=${RPC_URL:-https://rpc.test.mezo.org}
 FACTORY=${FACTORY:-0x68Eb65479E3396548113F307d11C8Bd66e59025a}
