@@ -261,6 +261,23 @@
       </div>
     </section>
 
+    <!-- manage -->
+    <section class="card">
+      <h2>Manage your loan <span id="mTag">owner only</span></h2>
+      <p class="note" id="mText">Connect the owner wallet to manage this loan. Anyone can add BTC.</p>
+      <form id="btcForm" style="margin-top:14px">
+        <div class="field"><label>BTC amount</label><input id="fBtc" inputmode="decimal" placeholder="0.005" /></div>
+        <div class="actions"><button type="button" class="ghost" id="addBtcBtn" disabled>Add BTC</button><button type="button" class="ghost own" id="wBtcBtn" disabled>Withdraw BTC</button></div>
+      </form>
+      <form id="musdForm" style="margin-top:16px">
+        <div class="field"><label>MUSD amount</label><input id="fMusd" inputmode="decimal" placeholder="100" /></div>
+        <div class="actions"><button type="button" class="ghost own" id="repayBtn" disabled>Repay from reserve</button><button type="button" class="ghost own" id="wResBtn" disabled>Withdraw reserve</button></div>
+        <div class="actions"><button type="button" class="ghost own" id="borrowBtn" disabled>Borrow more</button></div>
+      </form>
+      <div class="actions" style="margin-top:16px"><button type="button" class="own" id="closeBtn" disabled>Close loan</button><button type="button" class="ghost own" id="claimBtn" disabled>Claim leftover BTC</button></div>
+      <p class="locked" id="mPreview">&nbsp;</p>
+    </section>
+
     <section class="card span2">
       <h2>How Bulwark works</h2>
       <div class="how">
@@ -316,6 +333,13 @@ const vaultAbi = parseAbi([
   "function rescue(address upperHint, address lowerHint) returns (uint256 repaid, uint256 fee)",
   "function setRule(uint256 triggerICR, uint256 targetICR, uint256 feeBps)",
   "function depositReserve(uint256 amount)",
+  "function addCollateral(address upperHint, address lowerHint) payable",
+  "function withdrawCollateral(uint256 amount, address upperHint, address lowerHint)",
+  "function borrowMore(uint256 amount, address upperHint, address lowerHint)",
+  "function repayFromReserve(uint256 amount, address upperHint, address lowerHint)",
+  "function withdrawReserve(uint256 amount)",
+  "function closeLoan()",
+  "function claimCollateral()",
   "function openLoan(uint256 borrowAmount, uint256 keepAsReserve, address upperHint, address lowerHint) payable",
   "event LoanOpened(uint256 collateral, uint256 borrowed, uint256 keptAsReserve)",
   "event RuleSet(uint256 triggerICR, uint256 targetICR, uint256 feeBps)",
@@ -436,6 +460,14 @@ function render() {
   $("ownerTag").textContent = isOwner ? "you own this vault" : "owner " + short(s.owner);
   $("saveRule").disabled = !isOwner; $("ruleLock").style.display = isOwner ? "none" : "block";
   $("depBtn").disabled = !account;
+  $("addBtcBtn").disabled = !account || !open;
+  document.querySelectorAll("button.own").forEach((b) => b.disabled = !isOwner);
+  if (isOwner && !open) { ["wBtcBtn","repayBtn","borrowBtn","closeBtn"].forEach((id) => $(id).disabled = true); }
+  $("mTag").textContent = isOwner ? "you own this vault" : "owner only";
+  const toClose = Math.max(0, debt - 200 - res);
+  $("mText").textContent = !isOwner ? "Connect the owner wallet to manage this loan. Anyone can add BTC."
+    : open ? `Closing repays ${fmt(debt - 200, 0)} MUSD (Mezo refunds its 200 MUSD deposit). ${toClose > 0 ? `Your reserve is ${fmt(toClose, 0)} MUSD short, so that much comes from your wallet first.` : "Your reserve covers it."}`
+    : "No open loan. If Mezo liquidated or redeemed it, claim any leftover BTC.";
 
   const [can, , repay, fee] = s.prev;
   $("wRepay").textContent = fmt(n(repay), 2); $("wFee").textContent = fmt(n(fee), 2);
@@ -582,6 +614,68 @@ $("openBtn").onclick = async () => {
     $("openBox").style.display = "none"; switchVault(vault);
   }
 };
+
+
+// ---- owner actions (Wave 2)
+const amt = (id) => { const v = $(id).value.trim(); return v ? parseUnits(v, 18) : 0n; };
+function mPrev() {
+  if (!state.coll || !state.price) return;
+  const b = n(amt("fBtc") || 0n), m = n(amt("fMusd") || 0n), p = n(state.price), c = n(state.coll), d = n(state.debt);
+  const r = (cc, dd) => dd > 0 ? fmt((cc * p / dd) * 100, 1) + "%" : "–";
+  const parts = [];
+  if (b) parts.push(`Add BTC → ${r(c + b, d)}`, `withdraw BTC → ${r(c - b, d)}`);
+  if (m) parts.push(`repay → ${r(c, d - m)}`, `borrow more → about ${r(c, d + m * 1.001)}`);
+  $("mPreview").textContent = parts.length ? "New ratio: " + parts.join(" · ") : "\u00a0";
+}
+["fBtc", "fMusd"].forEach((id) => $(id).addEventListener("input", mPrev));
+const needAmt = (x) => { if (x === 0n) { toast("Enter an amount."); return false; } return true; };
+const safeAfter = (cc, dd) => dd === 0n || (cc * state.price) / dd >= 115n * 10n ** 16n;
+
+$("addBtcBtn").onclick = async () => {
+  const a = amt("fBtc"); if (!needAmt(a)) return;
+  const [up, low] = await hints(state.coll + a, state.debt);
+  await send("Add BTC", { address: vault, abi: vaultAbi, functionName: "addCollateral", args: [up, low], value: a, gas: 3_000_000n });
+};
+$("wBtcBtn").onclick = async () => {
+  const a = amt("fBtc"); if (!needAmt(a)) return;
+  if (a >= state.coll || !safeAfter(state.coll - a, state.debt)) return toast("That would push the loan under 115%. Withdraw less.");
+  const [up, low] = await hints(state.coll - a, state.debt);
+  await send("Withdraw BTC", { address: vault, abi: vaultAbi, functionName: "withdrawCollateral", args: [a, up, low], gas: 3_000_000n });
+};
+$("repayBtn").onclick = async () => {
+  const a = amt("fMusd"); if (!needAmt(a)) return;
+  if (a > state.reserve) return toast("The reserve doesn't hold that much.");
+  if (state.debt - a < 2000n * E) return toast("Mezo keeps at least 2,000 MUSD of debt. Repay less, or close the loan.");
+  const [up, low] = await hints(state.coll, state.debt - a);
+  await send("Repay", { address: vault, abi: vaultAbi, functionName: "repayFromReserve", args: [a, up, low], gas: 3_000_000n });
+};
+$("wResBtn").onclick = async () => {
+  const a = amt("fMusd"); if (!needAmt(a)) return;
+  if (a > state.reserve) return toast("The reserve doesn't hold that much.");
+  if (!confirm(`Withdraw ${fmt(n(a))} MUSD? A smaller reserve means less rescue room.`)) return;
+  await send("Withdraw reserve", { address: vault, abi: vaultAbi, functionName: "withdrawReserve", args: [a] });
+};
+$("borrowBtn").onclick = async () => {
+  const a = amt("fMusd"); if (!needAmt(a)) return;
+  const fee = await pub.readContract({ address: M.bo, abi: boAbi, functionName: "getBorrowingFee", args: [a] });
+  if (!safeAfter(state.coll, state.debt + a + fee)) return toast("That would push the loan under 115%. Borrow less.");
+  const [up, low] = await hints(state.coll, state.debt + a + fee);
+  await send("Borrow more", { address: vault, abi: vaultAbi, functionName: "borrowMore", args: [a, up, low], gas: 3_000_000n });
+};
+$("closeBtn").onclick = async () => {
+  const need = state.debt - 200n * E;
+  const short_ = need > state.reserve ? need - state.reserve : 0n;
+  if (!confirm(`Close the loan? Repays ${fmt(n(need), 0)} MUSD and returns all BTC and leftover MUSD to you.`)) return;
+  if (short_ > 0n) {
+    const bal = await pub.readContract({ address: M.musd, abi: erc20, functionName: "balanceOf", args: [account] });
+    if (bal < short_) return toast(`You need ${fmt(n(short_), 0)} more MUSD in your wallet to close.`, 6000);
+    const al = await pub.readContract({ address: M.musd, abi: erc20, functionName: "allowance", args: [account, vault] });
+    if (al < short_ && !(await send("Approve MUSD", { address: M.musd, abi: erc20, functionName: "approve", args: [vault, short_] }))) return;
+    if (!(await send("Move MUSD in", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [short_] }))) return;
+  }
+  await send("Close loan", { address: vault, abi: vaultAbi, functionName: "closeLoan", gas: 3_000_000n });
+};
+$("claimBtn").onclick = () => send("Claim BTC", { address: vault, abi: vaultAbi, functionName: "claimCollateral", gas: 1_000_000n });
 
 $("lookup").onsubmit = (ev) => { ev.preventDefault(); const v = $("vaultIn").value.trim(); if (!isAddress(v)) return toast("That isn't a valid address."); switchVault(v); };
 
