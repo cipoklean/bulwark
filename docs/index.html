@@ -49,7 +49,7 @@
 
   /* stepper */
   .steps { display: grid; gap: 0; }
-  .step { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .step { display: grid; grid-template-columns: 32px minmax(0,1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
   .step:first-child { border-top: 0; padding-top: 0; }
   .dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--mono); border: 1px solid var(--line); color: var(--faint); }
   .step.done .dot { background: var(--safe); color: #0e1a10; border-color: var(--safe); }
@@ -67,7 +67,9 @@
   .inp input { flex: 1; min-width: 0; font: 400 18px var(--mono); color: var(--ink); background: transparent; border: 0; padding: 13px 12px; outline: none; }
   .inp small { font: 500 13px var(--mono); color: var(--faint); padding: 0 12px; }
   .inp .max { font: 600 12px var(--mono); color: var(--btc); background: none; border: 0; width: auto; padding: 0 12px; }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .two { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+  .step > div, .field, .inp { min-width: 0; }
+  .preview { overflow-wrap: anywhere; }
   .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .preset { background: var(--panel2); border: 1px solid var(--line); color: var(--ink); padding: 10px 6px; border-radius: 12px; font: 500 13px var(--sans); text-align: center; }
   .preset b { display: block; font: 600 13px var(--mono); color: var(--btc); margin-top: 2px; }
@@ -149,7 +151,7 @@
   @media (min-width: 1100px) {
     .wrap { max-width: 1280px; padding: 0 32px 48px; display: grid; grid-template-columns: 400px minmax(0,1fr); column-gap: 28px; align-items: start; }
     header, footer { grid-column: 1 / -1; }
-    .side { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; scrollbar-width: thin; }
+    .side { min-width: 0; }
     h1 { font-size: 44px; }
     .main .tabs { position: sticky; top: 68px; z-index: 4; }
     .main .pane.on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 18px; align-items: start; }
