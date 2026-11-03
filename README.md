@@ -10,8 +10,9 @@ Built solo by [@cipoklean](https://github.com/cipoklean) for the Mezo Buildathon
 - **Pitch deck (with revenue model):** https://cipoklean.eu.cc/bulwark/bulwark-pitch-deck.pdf
 - **Demo video:** https://youtu.be/NrqSc9QgPqw
 - **Network:** Mezo testnet (chain 31611)
-- **Factory (source verified):** [`0x68Eb65479E3396548113F307d11C8Bd66e59025a`](https://explorer.test.mezo.org/address/0x68Eb65479E3396548113F307d11C8Bd66e59025a)
-- **Example vault (source verified):** [`0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5`](https://explorer.test.mezo.org/address/0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5)
+- **Factory v2, earning reserve (source verified):** [`0x75F74f18B126fc3f95AFe19BB367A9a6b3a5C7fC`](https://explorer.test.mezo.org/address/0x75F74f18B126fc3f95AFe19BB367A9a6b3a5C7fC)
+- **Example v2 vault (source verified):** [`0xA14B67f4321d4ba1e97b362CFb884C82DEbfd7F1`](https://explorer.test.mezo.org/address/0xA14B67f4321d4ba1e97b362CFb884C82DEbfd7F1)
+- **Wave 1 factory and vault (still live, still watched):** [`0x68Eb65479E3396548113F307d11C8Bd66e59025a`](https://explorer.test.mezo.org/address/0x68Eb65479E3396548113F307d11C8Bd66e59025a), [`0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5`](https://explorer.test.mezo.org/address/0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5)
 
 ---
 
@@ -32,6 +33,19 @@ I wanted something that is **there at the wrong moment for you**, without handin
 5. **You get a Telegram message** telling you what happened, with a link to the transaction.
 
 You stay in control the whole time. Only you can change the rule, withdraw the buffer, borrow more, take out BTC, or close the loan.
+
+### Your reserve earns while it waits (v2)
+
+A rescue buffer that sits idle costs you. So in v2 vaults, most of the buffer goes into **Mezo's own Stability Pool**, where it earns BTC every time Mezo liquidates someone else's loan.
+
+- **75% earns, 25% stays on hand** by default. You can change the split, or turn earning off, from the dashboard.
+- **A rescue pulls what it needs back out in the same transaction.** Nothing is slower.
+- **The BTC it earns goes into your loan**, not your wallet. Anyone can press "harvest", and the BTC always lands in your loan as extra collateral, so earnings make you safer.
+- **One honest catch I found while testing:** the Stability Pool pauses withdrawals whenever *any* Mezo loan is under 110%, which can happen in the same crash that needs your rescue. On testnet the riskiest loans sit near 112%, so even a 2% drop can pause it. That's why 25% stays on hand, and why the keeper first liquidates the under-water loans (anyone may, and it earns Mezo's liquidation reward), which unpauses the pool. The dashboard and the rescue preview both know when the pool is paused, so they never promise more than the vault can reach.
+
+### Where you sit in the redemption line (v2)
+
+Mezo lets anyone swap MUSD for BTC through *redemptions*, which take BTC from the loans with the lowest ratio first. That isn't a liquidation, but it does shrink your BTC. Every v2 vault can tell you its place in that line and how much MUSD would have to be redeemed from other loans before yours. Rescues raise your ratio, which also moves you further back.
 
 ### Built-in safety limits
 
@@ -162,8 +176,12 @@ The tests run on a fork of Mezo testnet against Mezo's real BorrowerOperations, 
 
 - Opening a loan and sending the extra MUSD to the owner
 - Refusing to rescue a healthy loan
-- A real rescue after BTC falls from $80,000 to $48,000 (149% → 180%, repaying 536 MUSD, keeper earns 2.68 MUSD)
+- A real rescue after a price drop, pulling the buffer back out of the Stability Pool
 - A partial rescue when the buffer is small
+- **A crash that pauses the Stability Pool:** the rescue uses the on-hand part, a keeper liquidates the under-water loans, the pool unpauses, and the second rescue reaches the target
+- **Harvest after a real liquidation:** another loan is liquidated, the reserve earns BTC, and harvest moves it into the loan
+- Earning on and off, deposits staying split 25/75, withdrawing and closing with a staked buffer
+- The redemption line position moving back after adding BTC
 - Respecting Mezo's minimum debt
 - Owner-only controls
 - Rejecting unsafe rules
@@ -182,6 +200,7 @@ One honest note: Mezo's price oracle is a special built-in contract (a precompil
 | PriceFeed | `0x86bCF0841622a5dAC14A313a15f96A95421b9366` |
 | HintHelpers | `0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6` |
 | SortedTroves | `0x722E4D24FD6Ff8b0AC679450F3D91294607268fA` |
+| StabilityPool | `0x1CCA7E410eE41739792eA0A24e00349Dd247680e` |
 | Oracle precompile | `0x7b7c000000000000000000000000000000000015` |
 
 ## How MUSD is used
@@ -198,8 +217,8 @@ MUSD isn't a side feature here. It *is* the safety mechanism:
 Wave 1 is about one thing done properly: liquidation protection. Next up:
 
 - **Rescue with BTC as well as MUSD**, for people who'd rather top up collateral than repay
-- **Redemption awareness**: warn users when their loan is near the front of Mezo's redemption queue (research first, so I don't overpromise)
-- **Put the idle buffer to work** in a safe yield source, without making rescues slower
+- ✅ **Redemption awareness**: every v2 vault reports its place in Mezo's redemption line (done in Wave 2)
+- ✅ **Put the idle buffer to work** in Mezo's Stability Pool, without making rescues slower (done in Wave 2)
 - **Mezo Passport** sign-in in the dashboard
 - **Keeper leaderboard** and a Telegram assistant you can ask "how safe is my loan?"
 - An independent review of the contracts before anything touches mainnet
