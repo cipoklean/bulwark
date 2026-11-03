@@ -25,7 +25,7 @@ if [ -z "${PRIVATE_KEY:-}" ]; then read -rsp "Test wallet private key: " PRIVATE
 ME=$(cast wallet address "$PRIVATE_KEY")
 echo "Wallet $ME has $(cast balance $ME --ether --rpc-url $RPC) BTC"
 
-send() { local out; out=$(cast send "$@" --rpc-url $RPC --private-key $PRIVATE_KEY --legacy --gas-limit 3000000 2>&1) || { echo "$out"; exit 1; }
+send() { local out; out=$(cast send "$@" --rpc-url $RPC --private-key $PRIVATE_KEY --legacy --gas-limit ${GAS_LIMIT:-6000000} 2>&1) || { echo "$out"; exit 1; }
   echo "$out" | grep -q "status *1" || { echo "Transaction failed:"; echo "$out"; exit 1; }
   echo "  tx $(echo "$out" | awk '/^transactionHash/{print $2}')"; }
 hints() { local nicr h; nicr=$(cast call $HH "computeNominalCR(uint256,uint256)(uint256)" $1 $2 --rpc-url $RPC | cut -d' ' -f1)
