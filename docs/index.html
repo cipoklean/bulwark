@@ -246,6 +246,20 @@
       <div class="rung"><div><b id="pLiq">–</b><span>Liquidation without Bulwark</span></div><div class="d" id="dLiq"></div></div>
       <div class="rung"><div><b id="pProt">–</b><span>Liquidation after the reserve is used</span></div><div class="d" id="dProt"></div></div>
     </div>
+    <div class="card hide" id="walletCard">
+      <p class="label">Your wallet on Mezo <span id="wAddr"></span></p>
+      <div class="grid2">
+        <div><div class="k">BTC</div><div class="v" id="wBtc">–</div><div class="h" id="wBtcUsd">&nbsp;</div></div>
+        <div><div class="k">MUSD</div><div class="v" id="wMusd">–</div><div class="h">in your wallet</div></div>
+      </div>
+      <p class="faint" id="wHint"></p>
+      <a href="https://faucet.test.mezo.org/" target="_blank" rel="noopener"><button class="ghost" style="margin-top:12px">Get test BTC from the Mezo faucet ↗</button></a>
+    </div>
+    <div class="card" id="flowCard">
+      <p class="label">Where the loan went <span>from on-chain events</span></p>
+      <div id="flows"><p class="note">Loading…</p></div>
+      <p class="faint">Debt also includes Mezo's 200 MUSD refundable gas deposit, its one-time borrowing fee and interest, which is why it's higher than what was borrowed minus repaid.</p>
+    </div>
   </section>
 
   <!-- manage -->
@@ -299,7 +313,7 @@
 
   <footer>
     <span>Bulwark · built on Mezo with MUSD</span>
-    <span><a href="https://github.com/cipoklean/bulwark" target="_blank" rel="noopener">GitHub</a> · <a href="bulwark-pitch-deck.pdf" target="_blank" rel="noopener">Deck</a> · <a id="vaultLink" target="_blank" rel="noopener">Vault</a></span>
+    <span><a href="https://github.com/cipoklean/bulwark" target="_blank" rel="noopener">GitHub</a> · <a href="bulwark-pitch-deck.pdf" target="_blank" rel="noopener">Deck</a> · <a href="https://faucet.test.mezo.org/" target="_blank" rel="noopener">Faucet</a> · <a id="vaultLink" target="_blank" rel="noopener">Vault</a></span>
   </footer>
 </div>
 
@@ -573,10 +587,16 @@ async function loadFeed() {
     if (!res.ok) throw new Error(res.status);
     const items = (await res.json()).items || [];
     if (v !== vault) return;
-    const rows = [];
+    const rows = []; const f = { borrowed: 0, kept: 0, coll: 0, dep: 0, wd: 0, rep: 0, fee: 0, n: 0, btcAdd: 0 };
     for (const it of items) {
       let ev; try { ev = decodeEventLog({ abi: vaultAbi, data: it.data, topics: it.topics.filter(Boolean) }); } catch { continue; }
-      const a = ev.args; let ic = "•", t = ev.eventName, s = "";
+      const a = ev.args;
+      if (ev.eventName === "LoanOpened") { f.borrowed += n(a.borrowed); f.kept += n(a.keptAsReserve); f.coll += n(a.collateral); }
+      if (ev.eventName === "ReserveDeposited") f.dep += n(a.amount);
+      if (ev.eventName === "ReserveWithdrawn") f.wd += n(a.amount);
+      if (ev.eventName === "CollateralAdded") f.btcAdd += n(a.amount);
+      if (ev.eventName === "Rescued") { f.rep += n(a.repaid); f.fee += n(a.fee); f.n++; }
+      let ic = "•", t = ev.eventName, s = "";
       switch (ev.eventName) {
         case "Rescued": ic = "🛡️"; t = `Rescued ${pct(a.icrBefore)}% → ${pct(a.icrAfter)}%`; s = `repaid ${fmt(n(a.repaid))} MUSD · keeper earned ${fmt(n(a.fee))}`; break;
         case "LoanOpened": ic = "₿"; t = "Loan opened"; s = `${fmt(n(a.collateral), 4)} BTC · borrowed ${fmt(n(a.borrowed), 0)} · reserve ${fmt(n(a.keptAsReserve), 0)}`; break;
@@ -590,8 +610,39 @@ async function loadFeed() {
       rows.push(`<div class="ev"><div class="ic">${ic}</div><div><div class="t">${t}</div><div class="s">${s}${when ? " · " + when : ""}</div></div><a href="${EXP}/tx/${it.transaction_hash}" target="_blank" rel="noopener">tx ↗</a></div>`);
     }
     $("feed").innerHTML = rows.join("") || `<p class="note">No activity yet.</p>`;
+    renderFlows(f);
     $("evCount").textContent = rows.length ? `${rows.length} events` : "";
   } catch { if (v === vault) $("feed").innerHTML = `<p class="note">History is unavailable right now. <a href="${EXP}/address/${v}?tab=logs" target="_blank" rel="noopener">See it on the explorer ↗</a></p>`; }
+}
+
+
+function renderFlows(f) {
+  if (!f.borrowed) { $("flows").innerHTML = `<p class="note">No loan opened in this vault yet.</p>`; return; }
+  const line = (label, v, sub) => `<div class="rung"><div><b>${v}</b><span>${label}</span></div><div class="d">${sub || ""}</div></div>`;
+  const m = (x) => fmt(x, 2) + " MUSD";
+  $("flows").innerHTML =
+    line("Borrowed when the loan opened", m(f.borrowed), `against ${fmt(f.coll, 4)} BTC`) +
+    line("Sent to the owner's wallet", m(f.borrowed - f.kept), "free to use") +
+    line("Kept in the vault as the reserve", m(f.kept), "for rescues") +
+    (f.dep ? line("Owner topped up the reserve", "+" + m(f.dep), "") : "") +
+    (f.wd ? line("Owner withdrew from the reserve", "−" + m(f.wd), "") : "") +
+    line("Reserve spent repaying debt in rescues", m(f.rep), `${f.n} rescue${f.n === 1 ? "" : "s"}`) +
+    line("Paid to keepers as fees", m(f.fee), "") +
+    line("Left in the reserve now", m(n(state?.reserve)), "") +
+    line("Debt now", m(n(state?.debt)), "owed to Mezo");
+}
+
+async function loadWallet() {
+  if (!account) return;
+  const [btc, musd] = await Promise.all([
+    pub.getBalance({ address: account }),
+    pub.readContract({ address: M.musd, abi: erc20, functionName: "balanceOf", args: [account] }),
+  ]);
+  $("walletCard").classList.remove("hide");
+  $("wAddr").textContent = short(account);
+  $("wBtc").textContent = fmt(n(btc), 5); $("wBtcUsd").textContent = state ? usd(n(btc) * n(state.price)) : "";
+  $("wMusd").textContent = fmt(n(musd), 2);
+  $("wHint").textContent = n(btc) < 0.0005 ? "Low on BTC for gas. Grab some from the faucet." : "Gas on Mezo is paid in BTC.";
 }
 
 async function loadVaults() {
@@ -618,7 +669,7 @@ function switchVault(v) {
 
 async function refresh(full) {
   try { await loadVault(); } catch (e) { console.error(e); toast("Couldn't read that vault. Is the address right?"); return; }
-  render(); renderSetup();
+  render(); renderSetup(); loadWallet().catch(console.error);
   if (full) loadFeed();
   loadVaults().catch(console.error);
 }
