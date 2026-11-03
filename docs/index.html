@@ -192,13 +192,19 @@
         <div class="dot">2</div>
         <div><h3>Open your vault</h3><div class="sum" id="st2s">Put in BTC and borrow MUSD. Part stays as your reserve.</div>
           <div class="body">
-            <div class="field"><label>BTC to lock</label><div class="inp"><input id="oColl" inputmode="decimal" value="0.05" /><small>BTC</small></div></div>
+            <div class="field"><label>BTC to lock</label><div class="inp"><input id="oColl" inputmode="decimal" value="0.048" /><small>BTC</small></div></div>
             <div class="two">
-              <div class="field"><label>Borrow</label><div class="inp"><input id="oBorrow" inputmode="decimal" value="2300" /><small>MUSD</small></div></div>
-              <div class="field"><label>Keep as reserve</label><div class="inp"><input id="oRes" inputmode="decimal" value="400" /><small>MUSD</small></div></div>
+              <div class="field"><label>Borrow</label><div class="inp"><input id="oBorrow" inputmode="decimal" value="1850" /><small>MUSD</small></div></div>
+              <div class="field"><label>Keep as reserve</label><div class="inp"><input id="oRes" inputmode="decimal" value="300" /><small>MUSD</small></div></div>
             </div>
             <div class="preview" id="oPreview">&nbsp;</div>
             <button id="openBtn">Open vault</button>
+            <details class="faint"><summary>New here? How much to borrow</summary>
+              <p><b>BTC to lock</b> is your collateral. The faucet gives 0.05 BTC, so lock about 0.048 and keep a little for gas.</p>
+              <p><b>Borrow</b> is the MUSD loan. Mezo's smallest is 1,800. Mezo adds 200 MUSD plus a small fee to the debt, so 1,850 borrowed is about 2,050 owed.</p>
+              <p><b>Keep as reserve</b> stays in your vault to rescue the loan later. The rest goes to your wallet.</p>
+              <p>Aim to open near 180%. Under 150% the loan is too thin and fails. 0.048 BTC, 1,850 borrow, 300 reserve works with the faucet amount.</p>
+            </details>
             <p class="faint">Mezo's smallest loan is about 2,000 MUSD of debt. Need test BTC? <a href="https://faucet.test.mezo.org/" target="_blank" rel="noopener">faucet.test.mezo.org</a></p>
           </div></div>
       </div>
