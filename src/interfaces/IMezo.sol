@@ -33,3 +33,19 @@ interface IERC20 {
     function transferFrom(address, address, uint256) external returns (bool);
     function approve(address, uint256) external returns (bool);
 }
+
+interface IStabilityPool {
+    function provideToSP(uint256 amount) external;
+    function withdrawFromSP(uint256 amount) external;
+    function withdrawCollateralGainToTrove(address upperHint, address lowerHint) external;
+    function getCompoundedMUSDDeposit(address depositor) external view returns (uint256);
+    function getDepositorCollateralGain(address depositor) external view returns (uint256);
+    function deposits(address depositor) external view returns (uint256);
+    function sortedTroves() external view returns (address);
+}
+
+interface ISortedTroves {
+    function getLast() external view returns (address);
+    function getPrev(address id) external view returns (address);
+    function getSize() external view returns (uint256);
+}

@@ -26,6 +26,10 @@ const vaultAbi = parseAbi([
   "function reserve() view returns (uint256)",
   "function owner() view returns (address)",
   "function rescueCount() view returns (uint256)",
+  "function reserveEarning() view returns (uint256)",
+  "function pendingHarvest() view returns (uint256)",
+  "function totalHarvested() view returns (uint256)",
+  "function earning() view returns (bool)",
 ]);
 const factoryAbi = parseAbi([
   "function vaultOf(address) view returns (address)",
@@ -37,7 +41,7 @@ const boAbi = parseAbi([
 ]);
 const BORROWER_OPS = "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5" as Address;
 
-type Ctx = { pub: PublicClient; factory: Address; account: Address; log: (...a: unknown[]) => void };
+type Ctx = { pub: PublicClient; factories: Address[]; account: Address; log: (...a: unknown[]) => void };
 
 const num = (x: bigint) => Number(formatUnits(x, 18));
 const p1 = (x: number) => `${(x * 100).toFixed(1)}%`;
@@ -132,9 +136,27 @@ async function statusText(ctx: Ctx, vault: Address) {
     `Liquidation if BTC hits ${usd(liqPrice)} (−${p1(1 - liqPrice / s.price)})`,
     `Loan: ${s.coll.toFixed(4)} BTC backing ${m2(s.debt)}`,
     `Reserve: ${m2(s.reserve)}`,
+    ...(await earningLines(ctx, vault)),
     ``,
     `Try /whatif 20 to see a 20% BTC drop.`,
   ].join("\n");
+}
+
+/** v2 vaults: how much of the reserve is earning, and the BTC it has earned. v1 vaults: nothing. */
+async function earningLines(ctx: Ctx, vault: Address): Promise<string[]> {
+  try {
+    const [on, inPool, pending, harvested] = await Promise.all([
+      ctx.pub.readContract({ address: vault, abi: vaultAbi, functionName: "earning" }),
+      ctx.pub.readContract({ address: vault, abi: vaultAbi, functionName: "reserveEarning" }),
+      ctx.pub.readContract({ address: vault, abi: vaultAbi, functionName: "pendingHarvest" }),
+      ctx.pub.readContract({ address: vault, abi: vaultAbi, functionName: "totalHarvested" }),
+    ]);
+    if (!on && inPool === 0n) return ["Earning: off"];
+    const btc = num(pending + harvested);
+    return [`Earning: ${m2(num(inPool))} in Mezo's Stability Pool, ${btc > 0 ? btc.toFixed(8) + " BTC earned so far" : "no BTC earned yet"}`];
+  } catch {
+    return [];
+  }
 }
 
 async function whatIfText(ctx: Ctx, vault: Address, dropPct: number) {
@@ -185,18 +207,27 @@ const HELP = [
 
 // ---------------------------------------------------------------- routing
 
+async function allVaults(ctx: Ctx): Promise<Address[]> {
+  const lists = await Promise.all(ctx.factories.map((f) => ctx.pub.readContract({ address: f, abi: factoryAbi, functionName: "allVaults" })));
+  return lists.flat();
+}
+
+/** A vault address, or the owner's wallet (newest factory first, so a v2 vault wins). */
 async function resolveVault(ctx: Ctx, addr: Address): Promise<Address | null> {
-  const all = await ctx.pub.readContract({ address: ctx.factory, abi: factoryAbi, functionName: "allVaults" });
+  const all = await allVaults(ctx);
   if (all.some((v) => v.toLowerCase() === addr.toLowerCase())) return addr;
-  const v = await ctx.pub.readContract({ address: ctx.factory, abi: factoryAbi, functionName: "vaultOf", args: [addr] });
-  return v === zeroAddress ? null : v;
+  for (const f of [...ctx.factories].reverse()) {
+    const v = await ctx.pub.readContract({ address: f, abi: factoryAbi, functionName: "vaultOf", args: [addr] });
+    if (v !== zeroAddress) return v;
+  }
+  return null;
 }
 
 async function vaultForChat(ctx: Ctx, chat: string): Promise<Address | null> {
   if (watchers[chat]) return watchers[chat] as Address;
   if (chat === process.env.TELEGRAM_CHAT_ID) {
-    const all = await ctx.pub.readContract({ address: ctx.factory, abi: factoryAbi, functionName: "allVaults" });
-    if (all.length === 1) return all[0];
+    const all = await allVaults(ctx);
+    if (all.length >= 1) return all[all.length - 1];
   }
   return null;
 }

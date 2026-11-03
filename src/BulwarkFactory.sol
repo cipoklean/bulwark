@@ -4,28 +4,31 @@ pragma solidity ^0.8.24;
 import {BulwarkVault} from "./BulwarkVault.sol";
 
 /// @title BulwarkFactory
-/// @notice Creates one vault per user and keeps the public list keepers scan.
+/// @notice Creates one vault per user and keeps the public list keepers scan. v2 vaults keep
+///         their reserve earning in Mezo's Stability Pool.
 contract BulwarkFactory {
     address public immutable borrowerOps;
     address public immutable troveManager;
     address public immutable priceFeed;
     address public immutable musd;
+    address public immutable stabilityPool;
 
     address[] public vaults;
     mapping(address => address) public vaultOf;
 
     event VaultCreated(address indexed owner, address vault);
 
-    constructor(address _borrowerOps, address _troveManager, address _priceFeed, address _musd) {
+    constructor(address _borrowerOps, address _troveManager, address _priceFeed, address _musd, address _stabilityPool) {
         borrowerOps = _borrowerOps;
         troveManager = _troveManager;
         priceFeed = _priceFeed;
         musd = _musd;
+        stabilityPool = _stabilityPool;
     }
 
     function createVault() external returns (address vault) {
         require(vaultOf[msg.sender] == address(0), "vault exists");
-        vault = address(new BulwarkVault(msg.sender, borrowerOps, troveManager, priceFeed, musd));
+        vault = address(new BulwarkVault(msg.sender, borrowerOps, troveManager, priceFeed, musd, stabilityPool));
         vaultOf[msg.sender] = vault;
         vaults.push(vault);
         emit VaultCreated(msg.sender, vault);

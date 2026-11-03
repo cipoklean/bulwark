@@ -33,12 +33,28 @@ const vaultAbi = parseAbi([
   "function rule() view returns (uint64 triggerICR, uint64 targetICR, uint16 feeBps)",
   "function owner() view returns (address)",
   "function reserve() view returns (uint256)",
+  "function VERSION() view returns (uint256)",
+  "function poolLocked() returns (bool)",
+  "function pendingHarvest() view returns (uint256)",
+  "function harvest(address upperHint, address lowerHint) returns (uint256)",
+  "function rebalance()",
   "event Rescued(address indexed keeper, uint256 icrBefore, uint256 icrAfter, uint256 repaid, uint256 fee, uint256 price)",
 ]);
 const hintAbi = parseAbi([
   "function computeNominalCR(uint256 coll, uint256 debt) pure returns (uint256)",
   "function getApproxHint(uint256 cr, uint256 numTrials, uint256 seed) view returns (address hint, uint256 diff, uint256 latestRandomSeed)",
 ]);
+const mezoAbi = parseAbi([
+  "function fetchPrice() returns (uint256)",
+  "function getLast() view returns (address)",
+  "function getPrev(address) view returns (address)",
+  "function getCurrentICR(address, uint256) view returns (uint256)",
+  "function batchLiquidateTroves(address[] borrowers)",
+]);
+const PRICE_FEED = "0x86bCF0841622a5dAC14A313a15f96A95421b9366" as Address;
+const TROVE_MANAGER = "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0" as Address;
+const MCR = 11n * 10n ** 17n;
+const HARVEST_MIN = BigInt(Math.round(Number(process.env.HARVEST_MIN_BTC ?? "0.00001") * 1e18));
 const sortedAbi = parseAbi([
   "function findInsertPosition(uint256 nicr, address prev, address next) view returns (address, address)",
 ]);
@@ -50,7 +66,9 @@ const env = (k: string, d?: string) => {
 };
 
 const rpc = env("RPC_URL", "https://rpc.test.mezo.org");
-const factory = env("FACTORY") as Address;
+// One or more factories, comma-separated (v1 and v2 vaults live in different factories).
+const factories = env("FACTORY").split(",").map((f) => f.trim()).filter(Boolean) as Address[];
+const factory = factories[factories.length - 1];
 const pollMs = Number(env("POLL_SECONDS", "30")) * 1000;
 const warnMargin = BigInt(Math.round(Number(env("WARN_MARGIN_PCT", "10")) * 1e16));
 const account = privateKeyToAccount(env("PRIVATE_KEY") as `0x${string}`);
@@ -86,7 +104,78 @@ const warned = new Set<string>();
 /** Vaults below their line that can't be rescued (empty reserve); alerted once until fixed. */
 const stuck = new Set<string>();
 
+const versions = new Map<string, number>();
+async function versionOf(vault: Address) {
+  const k = vault.toLowerCase();
+  if (!versions.has(k)) {
+    try {
+      versions.set(k, Number(await pub.readContract({ address: vault, abi: vaultAbi, functionName: "VERSION" })));
+    } catch {
+      versions.set(k, 1);
+    }
+  }
+  return versions.get(k)!;
+}
+
+/**
+ * Mezo's Stability Pool refuses withdrawals while any loan sits below 110%. In a crash that
+ * can block a v2 vault's earning reserve. Liquidating those loans (anyone may, and the
+ * liquidator earns Mezo's liquidation reward) unlocks it. Returns how many were liquidated.
+ */
+async function unlockPool(): Promise<number> {
+  const { result: price } = await pub.simulateContract({ address: PRICE_FEED, abi: mezoAbi, functionName: "fetchPrice", account });
+  const list: Address[] = [];
+  let cur = await pub.readContract({ address: MEZO.sortedTroves, abi: mezoAbi, functionName: "getLast" });
+  while (cur !== "0x0000000000000000000000000000000000000000" && list.length < 30) {
+    const icr = await pub.readContract({ address: TROVE_MANAGER, abi: mezoAbi, functionName: "getCurrentICR", args: [cur, price] });
+    if (icr >= MCR) break;
+    list.push(cur);
+    cur = await pub.readContract({ address: MEZO.sortedTroves, abi: mezoAbi, functionName: "getPrev", args: [cur] });
+  }
+  if (list.length === 0) return 0;
+  log(`pool locked: liquidating ${list.length} Mezo loan(s) under 110% to unlock it`);
+  const sim = await pub.simulateContract({ address: TROVE_MANAGER, abi: mezoAbi, functionName: "batchLiquidateTroves", args: [list], account });
+  const hash = await wallet.writeContract({ ...sim.request, gas: 8_000_000n });
+  const receipt = await pub.waitForTransactionReceipt({ hash, timeout: 120_000 });
+  log(`liquidation tx ${hash}: ${receipt.status}`);
+  return receipt.status === "success" ? list.length : 0;
+}
+
+const lastHarvest = new Map<string, number>();
+/** Moves BTC a v2 vault's reserve earned into its loan, at most once an hour per vault. */
+async function maybeHarvest(vault: Address) {
+  const k = vault.toLowerCase();
+  if (Date.now() - (lastHarvest.get(k) ?? 0) < 3_600_000) return;
+  const pending = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "pendingHarvest" });
+  if (pending < HARVEST_MIN) return;
+  lastHarvest.set(k, Date.now());
+  const [coll, debt] = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "loan" });
+  const [up, low] = await hintsFor(coll + pending, debt);
+  const sim = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "harvest", args: [up, low], account });
+  const hash = await wallet.writeContract({ ...sim.request, gas: 3_000_000n });
+  await pub.waitForTransactionReceipt({ hash, timeout: 120_000 });
+  log(`harvested ${formatUnits(pending, 18)} BTC into ${vault}: tx ${hash}`);
+  await telegram(
+    `🌱 Vault ${short(vault)}'s reserve earned ${formatUnits(pending, 18)} BTC in Mezo's Stability Pool. ` +
+    `It's now in the loan as extra collateral.\n${mezoTestnet.blockExplorers.default.url}/tx/${hash}`,
+    vault,
+  );
+}
+
 async function checkVault(vault: Address) {
+  const v2 = (await versionOf(vault)) >= 2;
+  if (v2) {
+    // Unlock the pool first when this vault needs a rescue and its earning reserve is stuck.
+    const [{ result: pre }, [trig]] = await Promise.all([
+      pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "previewRescue", account }),
+      pub.readContract({ address: vault, abi: vaultAbi, functionName: "rule" }),
+    ]);
+    if (trig > 0n && pre[1] > 0n && pre[1] < BigInt(trig)) {
+      const { result: locked } = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "poolLocked", account });
+      if (locked) await unlockPool().catch((e) => log(`unlock failed: ${(e as Error).message.split("\n")[0]}`));
+    }
+  }
+
   const { result } = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "previewRescue", account });
   const [canRescue, icr, repay] = result;
   const [trigger, target] = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "rule" });
@@ -132,6 +221,11 @@ async function checkVault(vault: Address) {
   try {
     const receipt = await pub.waitForTransactionReceipt({ hash, timeout: 120_000 });
     if (receipt.status !== "success") log(`rescue tx reverted ${hash}`);
+    else if (v2) {
+      // Top the on-hand share back up from the pool for the next rescue.
+      const sim2 = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "rebalance", account }).catch(() => null);
+      if (sim2) await wallet.writeContract({ ...sim2.request, gas: 2_000_000n }).catch(() => {});
+    }
   } catch (e) {
     log(`still waiting on ${hash}: ${(e as Error).message.split("\n")[0]}`);
   }
@@ -160,11 +254,17 @@ async function watchRescues(vaults: readonly Address[]) {
   }
 }
 
+async function allVaults(): Promise<Address[]> {
+  const lists = await Promise.all(factories.map((f) => pub.readContract({ address: f, abi: factoryAbi, functionName: "allVaults" })));
+  return lists.flat();
+}
+
 async function tick() {
-  const vaults = await pub.readContract({ address: factory, abi: factoryAbi, functionName: "allVaults" });
+  const vaults = await allVaults();
   for (const v of vaults) {
     try {
       await checkVault(v);
+      if ((await versionOf(v)) >= 2) await maybeHarvest(v);
     } catch (e) {
       log(`vault ${v}: ${(e as Error).message.split("\n")[0]}`);
     }
@@ -178,13 +278,13 @@ async function tick() {
 }
 
 async function main() {
-  log(`Bulwark keeper ${account.address} watching factory ${factory} on ${rpc}`);
+  log(`Bulwark keeper ${account.address} watching factory ${factories.join(", ")} on ${rpc}`);
   if (process.argv.includes("--once")) {
     const n = await tick();
     log(`checked ${n} vault(s)`);
     return;
   }
-  startCopilot({ pub: pub as never, factory, account: account.address, log }).catch((e) => log("copilot stopped", (e as Error).message));
+  startCopilot({ pub: pub as never, factories, account: account.address, log }).catch((e) => log("copilot stopped", (e as Error).message));
   for (;;) {
     try {
       await tick();

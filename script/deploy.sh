@@ -10,6 +10,7 @@ BO=0xCdF7028ceAB81fA0C6971208e83fa7872994beE5
 TM=0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0
 MUSD=0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503
 PF=0x86bCF0841622a5dAC14A313a15f96A95421b9366
+SP=0x1CCA7E410eE41739792eA0A24e00349Dd247680e  # Mezo Stability Pool (v2 vaults keep the reserve earning here)
 HH=0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6
 ST=0x722E4D24FD6Ff8b0AC679450F3D91294607268fA
 COLL=${COLL:-}; BORROW=${BORROW:-}; RESERVE=${RESERVE:-}
@@ -68,7 +69,7 @@ COLL=$(cast from-wei $COLL_WEI)
 echo "Plan: ${COLL} BTC collateral, borrow $(cast from-wei $BORROW_WEI | cut -c1-8) MUSD, keep $(cast from-wei $RESERVE_WEI | cut -c1-6) MUSD as rescue reserve"
 if [ -z "${FACTORY:-}" ]; then
   FACTORY=$(forge create src/BulwarkFactory.sol:BulwarkFactory --rpc-url $RPC --private-key $PRIVATE_KEY --broadcast --legacy \
-    --constructor-args $BO $TM $PF $MUSD | awk '/Deployed to:/{print $3}')
+    --constructor-args $BO $TM $PF $MUSD $SP | awk '/Deployed to:/{print $3}')
   echo "BulwarkFactory: $FACTORY"
 fi
 VAULT=$(cast call $FACTORY "vaultOf(address)(address)" $ME --rpc-url $RPC)
