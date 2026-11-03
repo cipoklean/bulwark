@@ -109,7 +109,7 @@ bash keeper/start.sh stop      # stop it
    ```
    Paste the token at the hidden prompt. It finds your chat, sends a test message, and restarts the keeper.
 
-From then on you'll get a warning when a vault gets close to its trigger, and a message after every rescue.
+From then on you'll get a warning when a vault gets close to its trigger, a message after every rescue, and an urgent alert if a vault falls below its line with too little in its reserve to be rescued.
 
 ## Deploy your own copy
 

@@ -31,6 +31,7 @@ const vaultAbi = parseAbi([
   "function loan() view returns (uint256 coll, uint256 debt)",
   "function rule() view returns (uint64 triggerICR, uint64 targetICR, uint16 feeBps)",
   "function owner() view returns (address)",
+  "function reserve() view returns (uint256)",
   "event Rescued(address indexed keeper, uint256 icrBefore, uint256 icrAfter, uint256 repaid, uint256 fee, uint256 price)",
 ]);
 const hintAbi = parseAbi([
@@ -84,6 +85,8 @@ async function hintsFor(coll: bigint, newDebt: bigint): Promise<[Address, Addres
 }
 
 const warned = new Set<string>();
+/** Vaults below their line that can't be rescued (empty reserve); alerted once until fixed. */
+const stuck = new Set<string>();
 
 async function checkVault(vault: Address) {
   const { result } = await pub.simulateContract({ address: vault, abi: vaultAbi, functionName: "previewRescue", account });
@@ -92,17 +95,33 @@ async function checkVault(vault: Address) {
   if (trigger === 0n) return;
 
   if (!canRescue) {
+    const key = vault.toLowerCase();
+    // Below the line but nothing to rescue with: the reserve is empty or too small.
+    if (icr > 0n && icr < BigInt(trigger)) {
+      if (!stuck.has(key)) {
+        stuck.add(key);
+        const res = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "reserve" });
+        await telegram(
+          `🚨 Bulwark vault ${short(vault)} is at ${pct(icr)}, BELOW its ${pct(BigInt(trigger))} rescue line, ` +
+          `but its reserve (${musd(res)}) is too small to rescue it.\n` +
+          `Top up the reserve or add BTC now. Mezo liquidates below 110%.`,
+        );
+      }
+      return;
+    }
+    stuck.delete(key);
     // Warn when the loan drifts toward its trigger, but never right after a rescue left it at its target.
     const near = icr < BigInt(trigger) + warnMargin && icr < BigInt(target) - 5n * 10n ** 15n;
-    if (near && icr > 0n && !warned.has(vault.toLowerCase())) {
-      warned.add(vault.toLowerCase());
+    if (near && icr > 0n && !warned.has(key)) {
+      warned.add(key);
       await telegram(`⚠️ Bulwark vault ${short(vault)} is at ${pct(icr)}, close to its ${pct(BigInt(trigger))} rescue line.`);
     } else if (icr >= BigInt(trigger) + warnMargin) {
-      warned.delete(vault.toLowerCase());
+      warned.delete(key);
     }
     return;
   }
 
+  stuck.delete(vault.toLowerCase());
   const [coll, debt] = await pub.readContract({ address: vault, abi: vaultAbi, functionName: "loan" });
   const [up, low] = await hintsFor(coll, debt - repay);
   log(`rescuing ${vault}: ratio ${pct(icr)}, repaying ${musd(repay)}`);
