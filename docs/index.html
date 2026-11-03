@@ -502,7 +502,7 @@ function renderSetup() {
         done = 3; setStep("st3", "done", `Rescue below ${fmt(mine.trig * 100, 0)}%, back to ${fmt(mine.tgt * 100, 0)}%`);
         if (!filled) {
           setStep("st4", "active", `${fmt(n(mine.reserve), 0)} of about ${fmt(need, 0)} MUSD needed for one full rescue`);
-          if (!$("fDep").value) $("fDep").value = Math.ceil(need - n(mine.reserve));
+          if (document.activeElement !== $("fDep")) $("fDep").value = Math.ceil(need - n(mine.reserve));
           depPreview();
         } else { done = 4; setStep("st4", "done", `${fmt(n(mine.reserve), 0)} MUSD ready, enough for a full rescue`); }
       }
