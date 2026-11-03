@@ -111,6 +111,17 @@ bash keeper/start.sh stop      # stop it
 
 From then on you'll get a warning when a vault gets close to its trigger, a message after every rescue, and an urgent alert if a vault falls below its line with too little in its reserve to be rescued.
 
+### Talk to the bot (Bulwark Copilot)
+The same bot answers questions. Open it in Telegram and try:
+
+1. `/watch 0xYourWalletOrVault` links your chat to your vault. You'll get that vault's alerts too, so anyone with a Bulwark vault can use the bot, not just the person running the keeper.
+2. `/status` tells you how safe the loan is in plain words: its health, the BTC price where a rescue starts, the price where Mezo would liquidate, and whether your reserve can cover a full rescue.
+3. `/whatif 20` shows what happens if BTC drops 20%: will a keeper step in, how much it repays, and whether that's enough.
+4. `/rescues` lists the last rescues with explorer links.
+5. `/topup` links to the dashboard to fill your reserve.
+
+You can also just type "how safe is my loan?" or "what if btc drops 30%?". Everything is read from the chain, and the bot never holds anyone's keys.
+
 ## Deploy your own copy
 
 `script/deploy.sh` does everything in one go: deploys the factory, creates your vault, sizes a loan to fit your wallet, and sets the rule.

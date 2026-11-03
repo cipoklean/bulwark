@@ -3,13 +3,14 @@
  * its owner's trigger. Anyone can run it; the first keeper to rescue earns the fee.
  *
  * Env: RPC_URL, PRIVATE_KEY, FACTORY, POLL_SECONDS (default 30),
- *      TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID (optional alerts), WARN_MARGIN_PCT (default 10)
+ *      TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID (optional alerts + the two-way Copilot bot), WARN_MARGIN_PCT (default 10)
  */
 import "dotenv/config";
 import {
   createPublicClient, createWalletClient, defineChain, formatUnits, http, parseAbi, type Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { chatsFor, send, startCopilot } from "./copilot.js";
 
 const mezoTestnet = defineChain({
   id: 31611,
@@ -62,17 +63,14 @@ const musd = (x: bigint) => `${Number(formatUnits(x, 18)).toFixed(2)} MUSD`;
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const log = (...a: unknown[]) => console.log(new Date().toISOString(), ...a);
 
-async function telegram(text: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN, chat = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chat) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ chat_id: chat, text, disable_web_page_preview: true }),
-    });
-  } catch (e) {
-    log("telegram failed", (e as Error).message);
+/** Sends to the operator's chat plus every chat watching this vault (see copilot.ts). */
+async function telegram(text: string, vault?: string) {
+  for (const chat of chatsFor(vault)) {
+    try {
+      await send(chat, text);
+    } catch (e) {
+      log("telegram failed", (e as Error).message);
+    }
   }
 }
 
@@ -105,6 +103,7 @@ async function checkVault(vault: Address) {
           `🚨 Bulwark vault ${short(vault)} is at ${pct(icr)}, BELOW its ${pct(BigInt(trigger))} rescue line, ` +
           `but its reserve (${musd(res)}) is too small to rescue it.\n` +
           `Top up the reserve or add BTC now. Mezo liquidates below 110%.`,
+          vault,
         );
       }
       return;
@@ -114,7 +113,7 @@ async function checkVault(vault: Address) {
     const near = icr < BigInt(trigger) + warnMargin && icr < BigInt(target) - 5n * 10n ** 15n;
     if (near && icr > 0n && !warned.has(key)) {
       warned.add(key);
-      await telegram(`⚠️ Bulwark vault ${short(vault)} is at ${pct(icr)}, close to its ${pct(BigInt(trigger))} rescue line.`);
+      await telegram(`⚠️ Bulwark vault ${short(vault)} is at ${pct(icr)}, close to its ${pct(BigInt(trigger))} rescue line.`, vault);
     } else if (icr >= BigInt(trigger) + warnMargin) {
       warned.delete(key);
     }
@@ -156,6 +155,7 @@ async function watchRescues(vaults: readonly Address[]) {
       `🛡️ Bulwark rescued vault ${short(l.address)}\n` +
       `Ratio: ${pct(icrBefore)} → ${pct(icrAfter)}\nRepaid: ${musd(repaid)} from its reserve\n` +
       `Keeper fee: ${musd(fee)} (${by})\n${mezoTestnet.blockExplorers.default.url}/tx/${l.transactionHash}`,
+      l.address,
     );
   }
 }
@@ -184,6 +184,7 @@ async function main() {
     log(`checked ${n} vault(s)`);
     return;
   }
+  startCopilot({ pub: pub as never, factory, account: account.address, log }).catch((e) => log("copilot stopped", (e as Error).message));
   for (;;) {
     try {
       await tick();
