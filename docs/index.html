@@ -694,11 +694,25 @@ function render() {
 async function loadFeed() {
   const v = vault;
   try {
-    const res = await fetch(`${API}/addresses/${v}/logs`);
+    const [res, txr] = await Promise.all([fetch(`${API}/addresses/${v}/logs`), fetch(`${API}/addresses/${v}/transactions?filter=to`).catch(() => null)]);
     if (!res.ok) throw new Error(res.status);
     const items = (await res.json()).items || [];
+    const txs = txr && txr.ok ? ((await txr.json()).items || []) : [];
     if (v !== vault) return;
-    const rows = []; const f = { borrowed: 0, kept: 0, coll: 0, dep: 0, wd: 0, rep: 0, fee: 0, n: 0, btcAdd: 0 };
+    const rows = []; const f = { borrowed: 0, kept: 0, coll: 0, dep: 0, wd: 0, rep: 0, fee: 0, n: 0, btcAdd: 0, ownRep: 0 };
+    const row = (block, ic, t, s, when, hash) => rows.push({ block: Number(block) || 0, html: `<div class="ev"><div class="ic">${ic}</div><div><div class="t">${t}</div><div class="s">${s}${when ? " · " + when : ""}</div></div><a href="${EXP}/tx/${hash}" target="_blank" rel="noopener">tx ↗</a></div>` });
+    const day = (ts) => ts ? new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" }) : "";
+    // Owner calls that only Mezo logs (no Bulwark event): read them from the vault's transactions.
+    for (const tx of txs) {
+      if (tx.status !== "ok") continue;
+      const prm = Object.fromEntries(((tx.decoded_input || {}).parameters || []).map((q) => [q.name, q.value]));
+      const amt = prm.amount ? Number(prm.amount) / 1e18 : 0;
+      const b = tx.block_number ?? tx.block, w = day(tx.timestamp);
+      if (tx.method === "repayFromReserve") { f.ownRep += amt; row(b, "↓", "Repaid from reserve", `${fmt(amt)} MUSD of debt paid by the owner, no fee`, w, tx.hash); }
+      if (tx.method === "borrowMore") row(b, "↑", "Borrowed more", `${fmt(amt)} MUSD to the owner`, w, tx.hash);
+      if (tx.method === "withdrawCollateral") row(b, "₿", "BTC withdrawn", `${fmt(amt, 4)} BTC to the owner`, w, tx.hash);
+      if (tx.method === "claimCollateral") row(b, "↓", "Leftover BTC claimed", "sent to the owner", w, tx.hash);
+    }
     for (const it of items) {
       let ev; try { ev = decodeEventLog({ abi: vaultAbi, data: it.data, topics: it.topics.filter(Boolean) }); } catch { continue; }
       const a = ev.args;
@@ -721,10 +735,10 @@ async function loadFeed() {
         case "EarningSet": ic = "%"; t = a.on ? "Earning on" : "Earning off"; s = a.on ? `${fmt(Number(a.liquidBps) / 100, 0)}% kept on hand` : "whole reserve on hand"; break;
         case "LoanClosed": ic = "✓"; t = "Loan closed"; s = `${fmt(n(a.collateralReturned), 4)} BTC returned`; break;
       }
-      const when = it.block_timestamp ? new Date(it.block_timestamp).toLocaleDateString([], { month: "short", day: "numeric" }) : "";
-      rows.push(`<div class="ev"><div class="ic">${ic}</div><div><div class="t">${t}</div><div class="s">${s}${when ? " · " + when : ""}</div></div><a href="${EXP}/tx/${it.transaction_hash}" target="_blank" rel="noopener">tx ↗</a></div>`);
+      row(it.block_number, ic, t, s, day(it.block_timestamp), it.transaction_hash);
     }
-    $("feed").innerHTML = rows.join("") || `<p class="note">No activity yet.</p>`;
+    rows.sort((x, y) => y.block - x.block);
+    $("feed").innerHTML = rows.map((r) => r.html).join("") || `<p class="note">No activity yet.</p>`;
     renderFlows(f);
     $("evCount").textContent = rows.length ? `${rows.length} events` : "";
   } catch { if (v === vault) $("feed").innerHTML = `<p class="note">History is unavailable right now. <a href="${EXP}/address/${v}?tab=logs" target="_blank" rel="noopener">See it on the explorer ↗</a></p>`; }
@@ -741,6 +755,7 @@ function renderFlows(f) {
     line("Kept in the vault as the reserve", m(f.kept), "for rescues") +
     (f.dep ? line("Owner topped up the reserve", "+" + m(f.dep), "") : "") +
     (f.wd ? line("Owner withdrew from the reserve", "−" + m(f.wd), "") : "") +
+    (f.ownRep ? line("Owner repaid debt from the reserve", "−" + m(f.ownRep), "no fee") : "") +
     line("Reserve spent repaying debt in rescues", m(f.rep), `${f.n} rescue${f.n === 1 ? "" : "s"}`) +
     line("Paid to keepers as fees", m(f.fee), "") +
     line("Left in the reserve now", m(n(state?.reserve)), "") +
