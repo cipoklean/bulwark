@@ -837,8 +837,19 @@ function openPreview() {
   if (!state) return;
   const c = Number($("oColl").value), b = Number($("oBorrow").value), r = Number($("oRes").value), p = n(state.price);
   if (!p || !c || !b) { $("oPreview").innerHTML = "&nbsp;"; return; }
-  const debt = b * 1.001 + 200;
-  $("oPreview").innerHTML = `Opens near <b>${fmt((c * p / debt) * 100, 0)}%</b>. <b>${fmt(b - r, 0)}</b> MUSD to your wallet, <b>${fmt(r, 0)}</b> kept as reserve.`;
+  const debt = b * 1.001 + 200, ratio = (c * p / debt) * 100;
+  const maxB = Math.max(0, Math.floor(((c * p) / 1.8 - 200) / 1.001 / 10) * 10);
+  const problem = openProblem(c, b, ratio);
+  $("oPreview").innerHTML = problem
+    ? `<span style="color:var(--danger)">${problem}</span> With ${fmt(c, 4)} BTC you can borrow up to about <b>${fmt(maxB, 0)}</b> MUSD (opens near 180%).`
+    : `Opens near <b>${fmt(ratio, 0)}%</b>. <b>${fmt(b - r, 0)}</b> MUSD to your wallet, <b>${fmt(r, 0)}</b> kept as reserve.`;
+  $("openBtn").disabled = !!problem;
+}
+/** Mezo rejects loans under ~1,800 MUSD or opened too thin; catch it before the wallet pops up. */
+function openProblem(c, b, ratio) {
+  if (b < 1800) return "Mezo's smallest loan is 1,800 MUSD.";
+  if (ratio < 150) return `That opens near ${fmt(ratio, 0)}%, too low to open safely. Aim for 150% or more.`;
+  return "";
 }
 ["oColl", "oBorrow", "oRes"].forEach((id) => $(id).addEventListener("input", openPreview));
 $("openBtn").onclick = async () => {
@@ -846,6 +857,8 @@ $("openBtn").onclick = async () => {
   const coll = val("oColl"), borrow = val("oBorrow"), res = val("oRes");
   if (!coll || !borrow) return toast("Enter the BTC and the MUSD to borrow.");
   if (res >= borrow) return toast("The reserve has to be smaller than what you borrow.");
+  if (state) { const c = Number($("oColl").value), b = Number($("oBorrow").value), pr = openProblem(c, b, (c * n(state.price) / (b * 1.001 + 200)) * 100);
+    if (pr) return toast(pr, 6000); }
   let mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
   if (mine === ZERO) {
     if (!(await send("Create vault", { address: FACTORY, abi: factoryAbi, functionName: "createVault", gas: 6_000_000n }))) return;
