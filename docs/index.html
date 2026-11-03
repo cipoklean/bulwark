@@ -246,6 +246,26 @@
       <div class="rung"><div><b id="pLiq">–</b><span>Liquidation without Bulwark</span></div><div class="d" id="dLiq"></div></div>
       <div class="rung"><div><b id="pProt">–</b><span>Liquidation after the reserve is used</span></div><div class="d" id="dProt"></div></div>
     </div>
+    <div class="card hide" id="earnCard">
+      <p class="label">Your reserve is earning <span id="eTag"></span></p>
+      <div class="grid2">
+        <div><div class="k">On hand</div><div class="v" id="eHand">–</div><div class="h">MUSD, instant</div></div>
+        <div><div class="k">In Stability Pool</div><div class="v" id="ePool">–</div><div class="h">MUSD, earning</div></div>
+        <div><div class="k">BTC earned</div><div class="v" id="eBtc">–</div><div class="h" id="eBtcH">earned so far</div></div>
+        <div><div class="k">Kept on hand</div><div class="v" id="eLiq">–</div><div class="h">your setting</div></div>
+      </div>
+      <p class="note" id="eNote" style="margin-top:10px"></p>
+      <button class="ghost" id="harvestBtn" style="margin-top:12px" disabled>Nothing to harvest yet</button>
+      <p class="faint">Anyone can harvest. The BTC goes into this loan as collateral, never to the caller.</p>
+    </div>
+    <div class="card hide" id="redCard">
+      <p class="label">Redemption line <span>Mezo redeems riskiest loans first</span></p>
+      <div class="grid2">
+        <div><div class="k">Your place</div><div class="v" id="rRank">–</div><div class="h">1 = first redeemed</div></div>
+        <div><div class="k">MUSD ahead of you</div><div class="v" id="rAhead">–</div><div class="h">redeemed before yours</div></div>
+      </div>
+      <p class="note" id="rNote" style="margin-top:10px"></p>
+    </div>
     <div class="card hide" id="walletCard">
       <p class="label">Your wallet on Mezo <span id="wAddr"></span></p>
       <div class="grid2">
@@ -272,6 +292,7 @@
       <button class="act" data-a="deposit"><i>+</i><span>Top up reserve<small>More MUSD ready for rescues</small></span></button>
       <button class="act own" data-a="repay"><i>↓</i><span>Repay from reserve<small>Pay down debt yourself, no fee</small></span></button>
       <button class="act own" data-a="rule"><i>⚙</i><span>Change rescue rule<small id="ruleSmall">–</small></span></button>
+      <button class="act own v2 hide" data-a="earn"><i>%</i><span>Earning settings<small>How much of the reserve earns in the pool</small></span></button>
       <div class="group">Take something out</div>
       <button class="act own" data-a="borrow"><i>↑</i><span>Borrow more MUSD<small>Lowers your ratio</small></span></button>
       <button class="act own" data-a="wBtc"><i>₿</i><span>Withdraw BTC<small>Lowers your ratio</small></span></button>
@@ -333,8 +354,17 @@ const CHAIN = defineChain({
   blockExplorers: { default: { name: "Mezo Explorer", url: "https://explorer.test.mezo.org" } },
 });
 const EXP = "https://explorer.test.mezo.org", API = "https://api.explorer.test.mezo.org/api/v2";
-const FACTORY = "0x68Eb65479E3396548113F307d11C8Bd66e59025a";
-const DEMO = "0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5";
+// v2 factory (earning reserve) first; v1 vaults from Wave 1 keep working and stay listed.
+const FACTORY = "0x75F74f18B126fc3f95AFe19BB367A9a6b3a5C7fC";
+const FACTORIES = [FACTORY, "0x68Eb65479E3396548113F307d11C8Bd66e59025a"];
+const DEMO = "0xA14B67f4321d4ba1e97b362CFb884C82DEbfd7F1";
+async function vaultOfAny(who) {
+  for (const f of FACTORIES) {
+    const v = await pub.readContract({ address: f, abi: factoryAbi, functionName: "vaultOf", args: [who] });
+    if (v !== ZERO) return v;
+  }
+  return ZERO;
+}
 const ZERO = "0x0000000000000000000000000000000000000000";
 const M = {
   bo: "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5", tm: "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
@@ -361,6 +391,22 @@ const vaultAbi = parseAbi([
   "function withdrawReserve(uint256 amount)",
   "function closeLoan()",
   "function claimCollateral()",
+  "function VERSION() view returns (uint256)",
+  "function earning() view returns (bool)",
+  "function liquidBps() view returns (uint16)",
+  "function reserveLiquid() view returns (uint256)",
+  "function reserveEarning() view returns (uint256)",
+  "function pendingHarvest() view returns (uint256)",
+  "function totalHarvested() view returns (uint256)",
+  "function poolLocked() returns (bool)",
+  "function redemptionPosition() view returns (uint256 rank, uint256 debtAhead, uint256 totalLoans)",
+  "function harvest(address upperHint, address lowerHint) returns (uint256)",
+  "function setEarning(bool on, uint256 liquidBps)",
+  "function rebalance()",
+  "event EarningSet(bool on, uint256 liquidBps)",
+  "event Staked(uint256 amount)",
+  "event Unstaked(uint256 amount)",
+  "event Harvested(address indexed by, uint256 btc)",
   "event LoanOpened(uint256 collateral, uint256 borrowed, uint256 keptAsReserve)",
   "event RuleSet(uint256 triggerICR, uint256 targetICR, uint256 feeBps)",
   "event ReserveDeposited(address indexed from, uint256 amount)",
@@ -451,7 +497,7 @@ async function connect(p) {
     p.on?.("chainChanged", (id) => setNet(parseInt(id, 16) === 31611));
     $("connect").textContent = short(account); $("connect").className = "sm ghost";
     ensureChain(p).catch((e) => toast(e.shortMessage || e.message, 6000));
-    const mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
+    const mine = await vaultOfAny(account);
     myVault = mine === ZERO ? null : getAddress(mine);
     if (myVault) { vault = myVault; history.replaceState(null, "", "?vault=" + vault); toast("Connected. Showing your vault."); }
     else toast("Connected. Next: open your vault.");
@@ -483,8 +529,20 @@ async function loadVault() {
   const icr = loan[1] > 0n ? await pub.readContract({ address: M.tm, abi: tmAbi, functionName: "getCurrentICR", args: [v, price] }) : 0n;
   let prev = [false, icr, 0n, 0n];
   try { prev = (await pub.simulateContract({ address: v, abi: vaultAbi, functionName: "previewRescue" })).result; } catch {}
+  let v2 = null;
+  try {
+    if ((await r("VERSION")) >= 2n) {
+      const [on, liq, inHand, inPool, pending, harvested, red] = await Promise.all([
+        r("earning"), r("liquidBps"), r("reserveLiquid"), r("reserveEarning"), r("pendingHarvest"), r("totalHarvested"),
+        loan[1] > 0n ? r("redemptionPosition").catch(() => null) : null,
+      ]);
+      let locked = false;
+      try { locked = (await pub.simulateContract({ address: v, abi: vaultAbi, functionName: "poolLocked" })).result; } catch {}
+      v2 = { on, liq: Number(liq), inHand, inPool, pending, harvested, red, locked };
+    }
+  } catch {}
   if (v !== vault) return;
-  state = { owner, trig: n(BigInt(rule[0])), tgt: n(BigInt(rule[1])), fee: Number(rule[2]), reserve, coll: loan[0], debt: loan[1], price, icr, count, total, prev };
+  state = { owner, trig: n(BigInt(rule[0])), tgt: n(BigInt(rule[1])), fee: Number(rule[2]), reserve, coll: loan[0], debt: loan[1], price, icr, count, total, prev, v2 };
 }
 
 const isOwner = () => account && state && account.toLowerCase() === state.owner.toLowerCase();
@@ -494,6 +552,35 @@ const fullRescueNeed = (s) => {
   const trigPrice = (debt * s.trig) / coll;
   return Math.max(0, debt - (coll * trigPrice) / s.tgt);
 };
+
+/* ---------------- v2: earning reserve + redemption line ---------------- */
+function renderV2(s) {
+  const x = s.v2;
+  $("earnCard").classList.toggle("hide", !x);
+  $("redCard").classList.toggle("hide", !x || !x.red);
+  document.querySelectorAll(".act.v2").forEach((b) => b.classList.toggle("hide", !x));
+  if (!x) return;
+  const res = n(s.reserve), pool = n(x.inPool), hand = n(x.inHand);
+  $("eTag").textContent = x.on ? (x.locked ? "pool paused" : "earning") : "off";
+  $("eLiq").textContent = x.on ? fmt(x.liq / 100, 0) + "%" : "100%";
+  $("eHand").textContent = fmt(hand, 0); $("ePool").textContent = fmt(pool, 0);
+  $("eBtc").textContent = fmt(n(x.pending + x.harvested), 8);
+  $("eBtcH").textContent = n(x.harvested) > 0 ? `${fmt(n(x.harvested), 8)} already in your loan` : "earned so far";
+  $("eNote").textContent = !x.on ? "Earning is off. The whole reserve sits in the vault, earning nothing."
+    : x.locked ? "Mezo's Stability Pool is paused because some loan elsewhere is under 110%. Rescues use the on-hand part until keepers liquidate that loan, which unpauses it."
+    : `${fmt(100 - x.liq / 100, 0)}% of the reserve earns BTC from Mezo liquidations in the Stability Pool. ${fmt(x.liq / 100, 0)}% stays on hand for instant rescues. A rescue pulls the rest back out in the same transaction.`;
+  $("harvestBtn").disabled = !(x.pending > 0n) || !(s.debt > 0n);
+  $("harvestBtn").textContent = x.pending > 0n ? `Move ${fmt(n(x.pending), 8)} BTC into the loan` : "Nothing to harvest yet";
+  if (x.red) {
+    const [rank, ahead, tot] = x.red;
+    $("rRank").textContent = `${rank} of ${tot}`;
+    $("rAhead").textContent = fmtBig(n(ahead));
+    const share = Number(tot) ? Number(rank) / Number(tot) : 0;
+    $("rNote").textContent = `Redemptions swap BTC for MUSD starting with the riskiest loan. ${fmtBig(n(ahead))} MUSD would have to be redeemed from ${Number(rank) - 1} other loans before yours. `
+      + (share < 0.2 ? "You're near the front of the line. Adding BTC or a higher rescue target moves you back." : "Every rescue raises your ratio, which also moves you further back.");
+  }
+}
+const fmtBig = (x) => x >= 1e9 ? fmt(x / 1e9, 2) + "B" : x >= 1e6 ? fmt(x / 1e6, 2) + "M" : x >= 1e3 ? fmt(x / 1e3, 1) + "K" : fmt(x, 0);
 
 /* ---------------- render ---------------- */
 function setStep(id, cls, sum) { const el = $(id); el.className = "step " + cls; if (sum) $(id + "s").textContent = sum; }
@@ -576,6 +663,7 @@ function render() {
   $("rescueText").textContent = can ? `This loan is below its trigger. A rescue repays ${fmt(n(repay))} MUSD from the reserve and lifts it to about ${fmt(s.tgt * 100, 0)}%.`
     : open ? `Healthy. A rescue unlocks if BTC falls to about ${usd(trigPrice)}.` : "Nothing to rescue.";
   $("rescueBtn").disabled = !can;
+  renderV2(s);
   $("vaultLink").href = `${EXP}/address/${vault}`; $("vaultLink").textContent = "Vault " + short(vault);
   $("updated").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
@@ -604,6 +692,10 @@ async function loadFeed() {
         case "ReserveDeposited": ic = "+"; t = "Reserve topped up"; s = `${fmt(n(a.amount))} MUSD`; break;
         case "ReserveWithdrawn": ic = "−"; t = "Reserve withdrawn"; s = `${fmt(n(a.amount))} MUSD`; break;
         case "CollateralAdded": ic = "+"; t = "BTC added"; s = `${fmt(n(a.amount), 4)} BTC`; break;
+        case "Harvested": ic = "🌱"; t = "Earned BTC moved into the loan"; s = `${fmt(n(a.btc), 8)} BTC from the Stability Pool`; break;
+        case "Staked": ic = "↗"; t = "Reserve put to work"; s = `${fmt(n(a.amount))} MUSD into the Stability Pool`; break;
+        case "Unstaked": ic = "↙"; t = "Reserve pulled back"; s = `${fmt(n(a.amount))} MUSD out of the Stability Pool`; break;
+        case "EarningSet": ic = "%"; t = a.on ? "Earning on" : "Earning off"; s = a.on ? `${fmt(Number(a.liquidBps) / 100, 0)}% kept on hand` : "whole reserve on hand"; break;
         case "LoanClosed": ic = "✓"; t = "Loan closed"; s = `${fmt(n(a.collateralReturned), 4)} BTC returned`; break;
       }
       const when = it.block_timestamp ? new Date(it.block_timestamp).toLocaleDateString([], { month: "short", day: "numeric" }) : "";
@@ -646,7 +738,7 @@ async function loadWallet() {
 }
 
 async function loadVaults() {
-  const list = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "allVaults" });
+  const list = (await Promise.all(FACTORIES.map((f) => pub.readContract({ address: f, abi: factoryAbi, functionName: "allVaults" })))).flat();
   const price = state?.price ?? (await pub.readContract({ address: M.pf, abi: pfAbi, functionName: "fetchPrice" }));
   const rows = await Promise.all(list.map(async (v) => {
     const [icr, res] = await Promise.all([
@@ -716,13 +808,13 @@ $("openBtn").onclick = async () => {
   if (res >= borrow) return toast("The reserve has to be smaller than what you borrow.");
   let mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
   if (mine === ZERO) {
-    if (!(await send("Create vault", { address: FACTORY, abi: factoryAbi, functionName: "createVault" }))) return;
+    if (!(await send("Create vault", { address: FACTORY, abi: factoryAbi, functionName: "createVault", gas: 6_000_000n }))) return;
     mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
   }
   myVault = vault = getAddress(mine); history.replaceState(null, "", "?vault=" + vault);
   const fee = await pub.readContract({ address: M.bo, abi: boAbi, functionName: "getBorrowingFee", args: [borrow] });
   const [up, low] = await hints(coll, borrow + 200n * E + fee);
-  await send("Open loan", { address: vault, abi: vaultAbi, functionName: "openLoan", args: [borrow, res, up, low], value: coll, gas: 3_000_000n });
+  await send("Open loan", { address: vault, abi: vaultAbi, functionName: "openLoan", args: [borrow, res, up, low], value: coll, gas: 5_000_000n });
 };
 
 /* ---------------- step 3: rule ---------------- */
@@ -750,7 +842,7 @@ async function deposit(a) {
   const bal = await pub.readContract({ address: M.musd, abi: erc20, functionName: "balanceOf", args: [account] });
   if (bal < a) return toast(`Your wallet has ${fmt(n(bal))} MUSD.`);
   if (!(await approveIfNeeded(a))) return;
-  return send("Top up reserve", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [a] });
+  return send("Top up reserve", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [a], gas: 3_000_000n });
 }
 $("depBtn").onclick = () => wallet ? deposit(val("fDep")) : walletSheet();
 
@@ -787,7 +879,7 @@ const ACTIONS = {
       if (a > state.reserve) return toast("The reserve doesn't hold that much.");
       if (state.debt - a < 2000n * E) return toast("That would take debt under 2,000 MUSD. Repay less, or close the loan.");
       const [u, l] = await hints(state.coll, state.debt - a);
-      await send("Repay", { address: vault, abi: vaultAbi, functionName: "repayFromReserve", args: [a, u, l], gas: 3_000_000n });
+      await send("Repay", { address: vault, abi: vaultAbi, functionName: "repayFromReserve", args: [a, u, l], gas: 4_000_000n });
     } }),
   rule: () => {
     openSheet(`<h2>Change rescue rule</h2><p class="note">A keeper repays from your reserve when the ratio falls below the rescue line.</p>
@@ -815,7 +907,7 @@ const ACTIONS = {
     } }),
   wRes: () => actionSheet({ title: "Withdraw reserve", desc: "MUSD goes back to your wallet. A smaller reserve means less rescue room.", unit: "MUSD", max: state.reserve,
     preview: (a) => `Reserve left: <b>${fmt(n(state.reserve - (a > state.reserve ? state.reserve : a)), 0)}</b> MUSD`, cta: "Withdraw",
-    run: async (a) => { if (a > state.reserve) return toast("The reserve doesn't hold that much."); await send("Withdraw reserve", { address: vault, abi: vaultAbi, functionName: "withdrawReserve", args: [a] }); } }),
+    run: async (a) => { if (a > state.reserve) return toast("The reserve doesn't hold that much."); await send("Withdraw reserve", { address: vault, abi: vaultAbi, functionName: "withdrawReserve", args: [a], gas: 3_000_000n }); } }),
   close: () => {
     const need = state.debt > 200n * E ? state.debt - 200n * E : 0n;
     const gap = need > state.reserve ? need - state.reserve : 0n;
@@ -829,8 +921,19 @@ const ACTIONS = {
           if (!(await approveIfNeeded(gap))) return;
           if (!(await send("Move MUSD in", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [gap] }))) return;
         }
-        await send("Close loan", { address: vault, abi: vaultAbi, functionName: "closeLoan", gas: 3_000_000n });
+        await send("Close loan", { address: vault, abi: vaultAbi, functionName: "closeLoan", gas: 5_000_000n });
       } });
+  },
+  earn: () => {
+    const x = state.v2;
+    openSheet(`<h2>Earning settings</h2><p class="note">The earning part sits in Mezo's Stability Pool and earns BTC from liquidations. The pool pauses withdrawals while any Mezo loan is under 110%, so keep some on hand for instant rescues.</p>
+      <div class="field"><label>Keep on hand</label><div class="inp"><input id="eL" inputmode="decimal" value="${fmt(x.liq / 100, 0)}" /><small>% of reserve</small></div></div>
+      <button id="eOn">${x.on ? "Save" : "Turn earning on"}</button>
+      ${x.on ? `<button class="ghost" style="margin-top:8px" id="eOff">Turn earning off (bring it all back)</button>` : ""}
+      <button class="ghost" style="margin-top:8px" id="eNo">Cancel</button>`);
+    $("eNo").onclick = closeSheet;
+    $("eOn").onclick = () => { const l = Number($("eL").value); if (!(l >= 0 && l <= 100)) return toast("Pick 0 to 100%."); closeSheet(); send("Earning settings", { address: vault, abi: vaultAbi, functionName: "setEarning", args: [true, BigInt(Math.round(l * 100))], gas: 4_000_000n }); };
+    if (x.on) $("eOff").onclick = () => { closeSheet(); send("Earning off", { address: vault, abi: vaultAbi, functionName: "setEarning", args: [false, BigInt(x.liq)], gas: 4_000_000n }); };
   },
   claim: () => actionSheet({ title: "Claim leftover BTC", noInput: true, cta: "Claim", desc: "If Mezo liquidated or redeemed this loan, any BTC left over is waiting for you.",
     run: () => send("Claim BTC", { address: vault, abi: vaultAbi, functionName: "claimCollateral", gas: 1_000_000n }) }),
@@ -842,12 +945,19 @@ document.querySelectorAll(".act").forEach((b) => b.onclick = () => {
   ACTIONS[b.dataset.a]();
 });
 
+$("harvestBtn").onclick = async () => {
+  if (!wallet) return walletSheet();
+  const p = state.v2.pending;
+  const [u, l] = await hints(state.coll + p, state.debt);
+  await send("Harvest", { address: vault, abi: vaultAbi, functionName: "harvest", args: [u, l], gas: 4_000_000n });
+};
+
 /* ---------------- rescue + lookup ---------------- */
 $("rescueBtn").onclick = async () => {
   if (!wallet) return walletSheet();
   const [, , repay] = state.prev;
   const [u, l] = await hints(state.coll, state.debt - repay);
-  await send("Rescue", { address: vault, abi: vaultAbi, functionName: "rescue", args: [u, l], gas: 3_000_000n });
+  await send("Rescue", { address: vault, abi: vaultAbi, functionName: "rescue", args: [u, l], gas: 5_000_000n });
 };
 $("lookup").onsubmit = (ev) => { ev.preventDefault(); const v = $("vaultIn").value.trim(); if (!isAddress(v)) return toast("That isn't a valid address."); switchVault(v); };
 
