@@ -144,6 +144,23 @@
   footer { margin-top: 26px; color: var(--faint); font: 400 12px var(--mono); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
   .hide { display: none !important; }
   @media (min-width: 700px) { h1 { font-size: 38px; } .wrap { padding-top: 8px; } }
+
+  /* desktop: two columns, setup on the left, tabs and cards on the right */
+  @media (min-width: 1100px) {
+    .wrap { max-width: 1280px; padding: 0 32px 48px; display: grid; grid-template-columns: 400px minmax(0,1fr); column-gap: 28px; align-items: start; }
+    header, footer { grid-column: 1 / -1; }
+    .side { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; scrollbar-width: thin; }
+    h1 { font-size: 44px; }
+    .main .tabs { position: sticky; top: 68px; z-index: 4; }
+    .main .pane.on { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 18px; align-items: start; }
+    .main .pane > .card { margin-bottom: 18px; }
+    #p-health > .card:first-child, #p-activity > .card, #p-manage > .card { grid-column: 1 / -1; }
+    #p-manage .card { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 14px; }
+    #p-manage .card > .label, #p-manage .card > .note, #p-manage .card > .group { grid-column: 1 / -1; }
+    .sheet { left: 50%; right: auto; top: 50%; bottom: auto; width: 520px; max-width: calc(100vw - 48px); margin: 0; border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; transform: translate(-50%, -46%); opacity: 0; transition: transform .2s, opacity .2s; }
+    .open .sheet { transform: translate(-50%, -50%); opacity: 1; }
+    .sheet .grab { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -156,6 +173,7 @@
     <button class="sm" id="connect">Connect</button>
   </header>
 
+  <aside class="side">
   <h1>Your Bitcoin loan,<br/><em>never liquidated.</em></h1>
   <p class="lede">Keep a small MUSD reserve in your own vault. If BTC falls toward Mezo's 110% liquidation line, any keeper can repay part of your debt from it, checked on-chain.</p>
 
@@ -214,6 +232,9 @@
   <div class="banner warnb hide" id="netBanner"><div style="flex:1">Your wallet is on <b>another network</b>. Bulwark runs on Mezo Testnet.</div><button class="sm" id="netBtn">Switch to Mezo</button></div>
   <div class="banner hide" id="demoBanner"><div>You're viewing <b>a demo vault</b>. Connect your wallet to see or open your own.</div></div>
 
+  </aside>
+
+  <main class="main">
   <nav class="tabs" id="tabs">
     <button data-t="health" class="on">Health</button>
     <button data-t="manage">Manage</button>
@@ -331,6 +352,8 @@
       <div id="feed"><p class="note">Loading history…</p></div>
     </div>
   </section>
+
+  </main>
 
   <footer>
     <span>Bulwark · built on Mezo with MUSD</span>
@@ -454,7 +477,7 @@ function walletSheet() {
     <a class="wl" href="https://link.trustwallet.com/open_url?coin_id=60&url=${url}"><span class="ph">T</span><span>Open in Trust Wallet<small>Opens this page inside Trust Wallet</small></span></a>
     <button class="wl ghost" id="copyLink"><span class="ph">↗</span><span>Copy page link<small>Paste it into your wallet app's browser</small></span></button>`;
   openSheet(`<h2>Connect a wallet</h2>
-    <p class="note">${list.length ? "Pick your wallet." : "This browser has no wallet. Phone browsers like Chrome can't sign transactions, so open Bulwark inside your wallet app."}</p>
+    <p class="note">${list.length ? "Pick your wallet." : (matchMedia("(pointer: fine)").matches ? "This browser has no wallet extension. Install MetaMask, OKX or Rabby, add Mezo Testnet, then reload this page." : "This browser has no wallet. Phone browsers like Chrome can't sign transactions, so open Bulwark inside your wallet app.")}</p>
     ${inj}${list.length ? '<div class="group" style="margin-top:14px">Or use a wallet app</div>' : ""}${apps}`);
   document.querySelectorAll(".wl[data-i]").forEach((b) => b.onclick = () => connect(list[+b.dataset.i].provider));
   $("copyLink").onclick = async () => { try { await navigator.clipboard.writeText(location.href); toast("Link copied. Paste it into your wallet's browser."); } catch { toast(location.href, 8000); } };
