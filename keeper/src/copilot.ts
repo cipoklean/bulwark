@@ -233,6 +233,10 @@ export async function reply(ctx: Ctx, chat: string, raw: string): Promise<string
   if (cmd === "/whatif" || /\b(drops?|dumps?|crash(es)?|falls?|down|what ?if)\b/.test(lower)) {
     if (!vault) return needVault;
     const d = Number(drop);
+    if (drop === undefined) {
+      const out = await Promise.all([10, 20, 30].map((x) => whatIfText(ctx, vault, x)));
+      return out.join("\n\n") + "\n\nPick your own: /whatif 25";
+    }
     if (!Number.isFinite(d) || d <= 0 || d >= 100) return "Tell me how far BTC drops, like /whatif 20";
     return whatIfText(ctx, vault, d);
   }
