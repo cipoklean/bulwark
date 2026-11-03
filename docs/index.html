@@ -9,139 +9,140 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M4 6h4v3h4V6h8v3h4V6h4v12c0 6-6 10-12 12C10 28 4 24 4 18z' fill='%23f7931a'/></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
     --bg: #0e0d0b; --panel: #161512; --panel2: #1d1b17; --line: #2c2924;
     --ink: #f1ebe0; --mute: #a39b8c; --faint: #6d665b;
     --btc: #f7931a; --safe: #7bd389; --warn: #f2c14e; --danger: #ef5b4c;
-    --r: 14px;
     --serif: "Fraunces", Georgia, serif; --mono: "JetBrains Mono", ui-monospace, monospace; --sans: "Inter", system-ui, sans-serif;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
-  body { min-height: 100vh; background:
-      radial-gradient(1200px 500px at 85% -10%, rgba(247,147,26,.10), transparent 60%),
-      radial-gradient(800px 400px at -10% 110%, rgba(123,211,137,.05), transparent 60%), var(--bg); }
-  a { color: var(--btc); text-decoration: none; } a:hover { text-decoration: underline; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; background: radial-gradient(900px 420px at 90% -10%, rgba(247,147,26,.10), transparent 60%), var(--bg); }
+  a { color: var(--btc); text-decoration: none; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px calc(90px + env(safe-area-inset-bottom)); }
 
-  /* header */
-  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0 18px; }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand svg { width: 30px; height: 30px; }
-  .brand b { font-family: var(--serif); font-weight: 800; font-size: 22px; letter-spacing: -.02em; }
-  .net { font: 500 11px var(--mono); color: var(--mute); border: 1px solid var(--line); padding: 4px 8px; border-radius: 99px; display: none; }
-  .net i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--safe); margin-right: 6px; box-shadow: 0 0 8px var(--safe); }
-  button, .btn { font: 600 14px var(--sans); color: #1a1206; background: var(--btc); border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; transition: transform .08s, opacity .2s; white-space: nowrap; }
-  button:active { transform: translateY(1px); }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 0; background: linear-gradient(var(--bg) 75%, transparent); }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand svg { width: 26px; height: 26px; }
+  .brand b { font: 800 20px var(--serif); letter-spacing: -.02em; }
+  .net { font: 500 10px var(--mono); color: var(--mute); border: 1px solid var(--line); padding: 3px 7px; border-radius: 99px; }
+  .net i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--safe); margin-right: 5px; }
+
+  button { font: 600 15px var(--sans); color: #1a1206; background: var(--btc); border: 0; border-radius: 12px; padding: 13px 16px; cursor: pointer; width: 100%; }
   button:disabled { opacity: .35; cursor: not-allowed; }
   button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-  button.ghost:hover { border-color: var(--faint); }
+  button.sm { width: auto; padding: 9px 14px; font-size: 14px; border-radius: 10px; }
+  button.danger { background: transparent; color: var(--danger); border: 1px solid #5a2620; }
 
-  /* hero */
-  .hero { margin: 6px 0 18px; }
-  .hero h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(28px, 7vw, 48px); line-height: 1.04; letter-spacing: -.025em; margin: 0 0 10px; }
-  .hero h1 em { font-style: italic; color: var(--btc); }
-  .hero p { color: var(--mute); margin: 0; max-width: 620px; line-height: 1.55; font-size: 15px; }
+  h1 { font: 600 30px/1.08 var(--serif); letter-spacing: -.025em; margin: 6px 0 8px; }
+  h1 em { font-style: italic; color: var(--btc); }
+  .lede { color: var(--mute); margin: 0 0 18px; font-size: 15px; }
 
-  .lookup { display: flex; gap: 8px; margin: 16px 0 22px; }
-  .lookup input { flex: 1; min-width: 0; }
-  input { font: 400 14px var(--mono); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; outline: none; width: 100%; }
-  input:focus { border-color: var(--btc); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+  .label { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin: 0 0 12px; display: flex; justify-content: space-between; gap: 8px; }
+  .label span { text-transform: none; letter-spacing: 0; color: var(--faint); font-weight: 400; }
+  .note { font-size: 14px; color: var(--mute); margin: 0; }
+  .faint { font-size: 13px; color: var(--faint); margin: 10px 0 0; }
 
-  /* grid */
-  .grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
-  .card { background: linear-gradient(180deg, var(--panel), var(--panel) 60%, #14130f); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; position: relative; overflow: hidden; }
-  .card h2 { font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin: 0 0 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .card h2 span { letter-spacing: 0; text-transform: none; color: var(--faint); font-weight: 400; }
+  /* stepper */
+  .steps { display: grid; gap: 0; }
+  .step { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .step:first-child { border-top: 0; padding-top: 0; }
+  .dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--mono); border: 1px solid var(--line); color: var(--faint); }
+  .step.done .dot { background: var(--safe); color: #0e1a10; border-color: var(--safe); }
+  .step.active .dot { background: var(--btc); color: #1a1206; border-color: var(--btc); }
+  .step h3 { margin: 4px 0 2px; font: 600 16px var(--sans); }
+  .step.locked h3 { color: var(--faint); }
+  .step .sum { font-size: 13px; color: var(--mute); }
+  .step .body { display: none; margin-top: 12px; }
+  .step.active .body { display: block; }
 
-  /* rampart: signature ratio meter */
-  .rampart { padding-top: 26px; }
-  .rampart::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 10px; background: var(--btc); opacity: .9;
-    -webkit-mask: linear-gradient(90deg, #000 50%, transparent 50%) 0 0/28px 10px repeat-x; mask: linear-gradient(90deg, #000 50%, transparent 50%) 0 0/28px 10px repeat-x; }
-  .status { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; }
-  .ratio { font: 600 clamp(56px, 17vw, 104px)/.95 var(--serif); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-  .ratio small { font-size: .38em; color: var(--mute); margin-left: 4px; font-weight: 400; }
-  .pill { font: 600 12px var(--mono); padding: 6px 10px; border-radius: 99px; border: 1px solid currentColor; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font: 500 12px var(--mono); color: var(--mute); margin-bottom: 6px; }
+  .inp { display: flex; align-items: center; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; }
+  .inp:focus-within { border-color: var(--btc); }
+  .inp input { flex: 1; min-width: 0; font: 400 18px var(--mono); color: var(--ink); background: transparent; border: 0; padding: 13px 12px; outline: none; }
+  .inp small { font: 500 13px var(--mono); color: var(--faint); padding: 0 12px; }
+  .inp .max { font: 600 12px var(--mono); color: var(--btc); background: none; border: 0; width: auto; padding: 0 12px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .preset { background: var(--panel2); border: 1px solid var(--line); color: var(--ink); padding: 10px 6px; border-radius: 12px; font: 500 13px var(--sans); text-align: center; }
+  .preset b { display: block; font: 600 13px var(--mono); color: var(--btc); margin-top: 2px; }
+  .preset.on { border-color: var(--btc); background: rgba(247,147,26,.08); }
+  .preview { font: 500 13px var(--mono); color: var(--mute); background: var(--panel2); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .preview b { color: var(--ink); }
+
+  /* banner */
+  .banner { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mute); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
+  .banner b { color: var(--ink); }
+
+  /* tabs */
+  .tabs { position: sticky; top: 58px; z-index: 4; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+  .tabs button { background: transparent; color: var(--mute); padding: 10px 4px; font-size: 14px; border-radius: 10px; }
+  .tabs button.on { background: var(--panel2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .pane { display: none; } .pane.on { display: block; }
+
+  /* health */
+  .status { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .ratio { font: 600 64px/1 var(--serif); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .ratio small { font-size: .38em; color: var(--mute); margin-left: 3px; font-weight: 400; }
+  .pill { font: 600 12px var(--mono); padding: 6px 10px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
   .pill.safe { color: var(--safe); } .pill.warn { color: var(--warn); } .pill.danger { color: var(--danger); }
-  .sub { color: var(--mute); font-size: 14px; margin: 8px 0 22px; line-height: 1.5; }
-  .meter { position: relative; height: 60px; margin: 22px 0 4px; }
-  .track { position: absolute; left: 0; right: 0; top: 22px; height: 12px; border-radius: 3px; overflow: hidden; display: flex; }
-  .track div { height: 100%; }
-  .z-liq { background: repeating-linear-gradient(135deg, var(--danger) 0 6px, #b8392c 6px 12px); }
-  .z-risk { background: linear-gradient(90deg, #c4492f, var(--warn)); }
-  .z-ok { background: linear-gradient(90deg, #8fbf6a, var(--safe)); }
-  .tick { position: absolute; top: 14px; width: 2px; height: 28px; background: var(--ink); opacity: .85; transform: translateX(-1px); }
-  .tick label { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font: 600 10px var(--mono); color: var(--mute); white-space: nowrap; }
-  .tick.t2 label { top: 32px; }
-  .needle { position: absolute; top: 4px; width: 0; height: 0; transform: translateX(-8px); border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 12px solid var(--btc); transition: left .8s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 6px rgba(247,147,26,.6)); }
-  .scale { display: flex; justify-content: space-between; font: 400 10px var(--mono); color: var(--faint); margin-top: 12px; }
+  .bar { position: relative; height: 12px; border-radius: 6px; margin: 22px 0 30px; background: linear-gradient(90deg, var(--danger) 0 6.7%, #c4492f 6.7%, var(--warn) 33%, var(--safe) 60%); }
+  .bar .mk { position: absolute; top: -4px; width: 2px; height: 20px; background: var(--ink); }
+  .bar .mk label { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font: 500 10px var(--mono); color: var(--mute); white-space: nowrap; }
+  .bar .me { position: absolute; top: -12px; transform: translateX(-7px); border: 7px solid transparent; border-top: 10px solid var(--btc); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .grid2 > div { background: var(--panel2); padding: 12px; }
+  .k { font: 500 11px var(--mono); color: var(--mute); text-transform: uppercase; letter-spacing: .06em; }
+  .v { font: 600 18px var(--mono); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .h { font-size: 12px; color: var(--faint); }
+  .rung { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
+  .rung:first-of-type { border-top: 0; }
+  .rung b { font: 600 15px var(--mono); } .rung span { font-size: 13px; color: var(--mute); display: block; }
+  .rung .d { font: 500 13px var(--mono); color: var(--faint); text-align: right; }
 
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 18px; }
-  .stat { background: var(--panel2); padding: 14px; }
-  .stat .k { font: 500 11px var(--mono); color: var(--mute); text-transform: uppercase; letter-spacing: .08em; }
-  .stat .v { font: 600 20px var(--mono); margin-top: 6px; font-variant-numeric: tabular-nums; }
-  .stat .h { font-size: 12px; color: var(--faint); margin-top: 3px; }
+  /* manage list */
+  .act { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--panel2); border: 1px solid var(--line); color: var(--ink); padding: 13px 14px; border-radius: 12px; margin-bottom: 8px; text-align: left; font-weight: 500; }
+  .act i { font-style: normal; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(247,147,26,.12); color: var(--btc); font: 700 15px var(--mono); flex: none; }
+  .act span { flex: 1; } .act small { display: block; font-size: 12px; color: var(--faint); font-weight: 400; }
+  .act::after { content: "›"; color: var(--faint); font-size: 20px; }
+  .act.red i { background: rgba(239,91,76,.12); color: var(--danger); }
+  .group { font: 600 11px var(--mono); color: var(--faint); letter-spacing: .1em; text-transform: uppercase; margin: 14px 0 8px; }
+  .group:first-child { margin-top: 0; }
 
-  /* price ladder */
-  .ladder { display: grid; gap: 10px; }
-  .rung { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); }
-  .rung i { width: 10px; height: 10px; border-radius: 2px; }
-  .rung b { font: 600 15px var(--mono); }
-  .rung span { font-size: 13px; color: var(--mute); }
-  .rung .d { font: 400 12px var(--mono); color: var(--faint); text-align: right; }
-
-  /* reserve bar */
-  .rbar { height: 10px; background: var(--panel2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); margin: 10px 0 8px; }
-  .rbar div { height: 100%; background: var(--btc); width: 0; transition: width .8s; }
-  .note { font-size: 13px; color: var(--mute); line-height: 1.5; }
-
-  /* forms */
-  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-  .row label, .field label { display: block; font: 500 11px var(--mono); color: var(--mute); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
-  .field { margin-bottom: 10px; }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .actions button { flex: 1; }
-  .locked { font-size: 13px; color: var(--faint); margin-top: 10px; }
-
-  /* feed + table */
-  .feed { display: grid; gap: 0; }
-  .ev { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); align-items: center; }
+  .ev { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); align-items: center; }
   .ev:first-child { border-top: 0; }
-  .ev .ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; background: var(--panel2); border: 1px solid var(--line); }
-  .ev .t { font-size: 14px; } .ev .s { font: 400 12px var(--mono); color: var(--faint); margin-top: 2px; }
+  .ev .ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; background: var(--panel2); border: 1px solid var(--line); }
+  .ev .t { font-size: 14px; } .ev .s { font: 400 12px var(--mono); color: var(--faint); }
   .ev a { font: 500 12px var(--mono); }
   table { width: 100%; border-collapse: collapse; font: 400 13px var(--mono); }
-  td, th { padding: 10px 6px; text-align: left; border-top: 1px solid var(--line); }
-  th { color: var(--mute); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-top: 0; }
-  td.n, th.n { text-align: right; }
-  tr.me td { color: var(--btc); }
-  tr[data-v] { cursor: pointer; } tr[data-v]:hover td { background: var(--panel2); }
+  td, th { padding: 11px 4px; text-align: left; border-top: 1px solid var(--line); }
+  th { color: var(--mute); font-weight: 500; font-size: 11px; text-transform: uppercase; border-top: 0; }
+  td.n, th.n { text-align: right; } tr.me td { color: var(--btc); }
+  .lookup { display: flex; gap: 8px; margin-top: 14px; }
+  .lookup .inp { flex: 1; } .lookup .inp input { font-size: 13px; }
 
-  .how { display: grid; gap: 10px; counter-reset: s; }
-  .how div { padding: 12px 12px 12px 46px; position: relative; background: var(--panel2); border-radius: 10px; border: 1px solid var(--line); font-size: 14px; line-height: 1.45; color: var(--mute); }
-  .how div b { color: var(--ink); font-weight: 600; }
-  .how div::before { counter-increment: s; content: counter(s); position: absolute; left: 12px; top: 12px; width: 24px; height: 24px; border-radius: 6px; background: var(--btc); color: #1a1206; font: 700 13px var(--mono); display: grid; place-items: center; }
+  /* sheet */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-width: 640px; margin: 0 auto; background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: 20px 20px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom)); transform: translateY(105%); transition: transform .25s cubic-bezier(.2,.8,.2,1); max-height: 88vh; overflow: auto; visibility: hidden; }
+  .sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 14px; }
+  .sheet h2 { font: 600 22px var(--serif); margin: 0 0 6px; }
+  .sheet .note { margin-bottom: 14px; }
+  .open .scrim { opacity: 1; pointer-events: auto; } .open .sheet { transform: none; visibility: visible; }
+  .wl { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); padding: 14px; border-radius: 12px; margin-bottom: 8px; font-weight: 600; text-align: left; }
+  .wl img, .wl .ph { width: 32px; height: 32px; border-radius: 8px; flex: none; }
+  .wl .ph { display: grid; place-items: center; background: var(--btc); color: #1a1206; font: 700 14px var(--mono); }
+  .wl small { display: block; font-weight: 400; color: var(--faint); font-size: 12px; }
 
-  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(120px); background: var(--ink); color: #111; padding: 12px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: 0 10px 30px rgba(0,0,0,.5); transition: transform .3s; z-index: 9; }
-  .toast.on { transform: translateX(-50%) translateY(0); }
-  .skel { color: transparent !important; background: linear-gradient(90deg, var(--panel2), #26231e, var(--panel2)); background-size: 200% 100%; animation: sh 1.2s infinite; border-radius: 6px; }
-  @keyframes sh { to { background-position: -200% 0; } }
-  footer { margin-top: 34px; color: var(--faint); font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-family: var(--mono); }
-
-  @media (min-width: 640px) {
-    .net { display: inline-block; }
-    .stats { grid-template-columns: repeat(4, 1fr); }
-  }
-  @media (min-width: 960px) {
-    .wrap { padding: 28px 28px 80px; }
-    .grid { grid-template-columns: 1.55fr 1fr; align-items: start; }
-    .span2 { grid-column: 1 / -1; }
-    .card { padding: 22px; }
-    .hero { display: flex; justify-content: space-between; align-items: end; gap: 30px; }
-    .hero .lookup { width: 440px; margin: 0; flex: none; }
-  }
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(150px); background: var(--ink); color: #111; padding: 12px 16px; border-radius: 12px; font-size: 14px; width: max-content; max-width: calc(100% - 32px); box-shadow: 0 10px 30px rgba(0,0,0,.5); transition: transform .3s; z-index: 30; visibility: hidden; }
+  .toast.on { transform: translateX(-50%) translateY(0); visibility: visible; }
+  footer { margin-top: 26px; color: var(--faint); font: 400 12px var(--mono); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .hide { display: none !important; }
+  @media (min-width: 700px) { h1 { font-size: 38px; } .wrap { padding-top: 8px; } }
 </style>
 </head>
 <body>
@@ -149,155 +150,165 @@
   <header>
     <div class="brand">
       <svg viewBox="0 0 32 32"><path d="M4 6h4v3h4V6h8v3h4V6h4v12c0 6-6 10-12 12C10 28 4 24 4 18z" fill="#f7931a"/><path d="M16 12v10M12 16h8" stroke="#1a1206" stroke-width="2.4" stroke-linecap="round"/></svg>
-      <b>Bulwark</b>
-      <span class="net"><i></i>Mezo Testnet</span>
+      <b>Bulwark</b><span class="net"><i></i>Mezo testnet</span>
     </div>
-    <button id="connect">Connect wallet</button>
+    <button class="sm" id="connect">Connect</button>
   </header>
 
-  <section class="hero">
-    <div>
-      <h1>Your Bitcoin loan,<br/><em>never liquidated.</em></h1>
-      <p>Bulwark keeps an MUSD reserve inside your vault. If BTC falls and your loan nears Mezo's 110% liquidation line, any keeper can trigger a rescue that repays debt from the reserve, checked on-chain, for a small fee.</p>
+  <h1>Your Bitcoin loan,<br/><em>never liquidated.</em></h1>
+  <p class="lede">Keep a small MUSD reserve in your own vault. If BTC falls toward Mezo's 110% liquidation line, any keeper can repay part of your debt from it, checked on-chain.</p>
+
+  <!-- guided setup -->
+  <section class="card" id="setup">
+    <p class="label">Get protected <span id="setupCount">4 steps</span></p>
+    <div class="steps">
+      <div class="step" id="st1">
+        <div class="dot">1</div>
+        <div><h3>Connect your wallet</h3><div class="sum" id="st1s">MetaMask, OKX, Rabby or any Mezo-ready wallet.</div>
+          <div class="body"><button id="st1b">Connect wallet</button></div></div>
+      </div>
+      <div class="step" id="st2">
+        <div class="dot">2</div>
+        <div><h3>Open your vault</h3><div class="sum" id="st2s">Put in BTC and borrow MUSD. Part stays as your reserve.</div>
+          <div class="body">
+            <div class="field"><label>BTC to lock</label><div class="inp"><input id="oColl" inputmode="decimal" value="0.05" /><small>BTC</small></div></div>
+            <div class="two">
+              <div class="field"><label>Borrow</label><div class="inp"><input id="oBorrow" inputmode="decimal" value="2300" /><small>MUSD</small></div></div>
+              <div class="field"><label>Keep as reserve</label><div class="inp"><input id="oRes" inputmode="decimal" value="400" /><small>MUSD</small></div></div>
+            </div>
+            <div class="preview" id="oPreview">&nbsp;</div>
+            <button id="openBtn">Open vault</button>
+            <p class="faint">Mezo's smallest loan is about 2,000 MUSD of debt. Need test BTC? <a href="https://faucet.test.mezo.org/" target="_blank" rel="noopener">faucet.test.mezo.org</a></p>
+          </div></div>
+      </div>
+      <div class="step" id="st3">
+        <div class="dot">3</div>
+        <div><h3>Set your rescue rule</h3><div class="sum" id="st3s">When should a keeper step in, and how far back up?</div>
+          <div class="body">
+            <div class="presets">
+              <button class="preset" data-p="170,185"><span>Careful</span><b>170→185%</b></button>
+              <button class="preset" data-p="160,175"><span>Balanced</span><b>160→175%</b></button>
+              <button class="preset" data-p="130,145"><span>Tight</span><b>130→145%</b></button>
+            </div>
+            <div class="two">
+              <div class="field"><label>Rescue below</label><div class="inp"><input id="fTrig" inputmode="decimal" value="160" /><small>%</small></div></div>
+              <div class="field"><label>Repay back to</label><div class="inp"><input id="fTgt" inputmode="decimal" value="175" /><small>%</small></div></div>
+            </div>
+            <div class="field"><label>Keeper fee</label><div class="inp"><input id="fFee" inputmode="decimal" value="0.5" /><small>% of repaid</small></div></div>
+            <button id="saveRule">Save rule</button>
+          </div></div>
+      </div>
+      <div class="step" id="st4">
+        <div class="dot">4</div>
+        <div><h3>Fill your reserve</h3><div class="sum" id="st4s">Enough MUSD for at least one full rescue.</div>
+          <div class="body">
+            <div class="field"><label>Add MUSD</label><div class="inp"><input id="fDep" inputmode="decimal" placeholder="100" /><small>MUSD</small></div></div>
+            <div class="preview" id="depPreview">&nbsp;</div>
+            <button id="depBtn">Add to reserve</button>
+          </div></div>
+      </div>
     </div>
-    <form class="lookup" id="lookup">
-      <input id="vaultIn" placeholder="Vault address 0x…" spellcheck="false" autocomplete="off" />
-      <button class="ghost" type="submit">View</button>
-    </form>
   </section>
 
-  <main class="grid">
-    <!-- health -->
-    <section class="card rampart">
-      <h2>Loan health <span id="updated">loading…</span></h2>
-      <div class="status">
-        <div class="ratio" id="icr"><span class="skel">000.0</span><small>%</small></div>
-        <span class="pill" id="pill">…</span>
-      </div>
-      <p class="sub" id="explain">Reading your vault from Mezo…</p>
-      <div class="meter" id="meter">
-        <div class="track"><div class="z-liq" id="zLiq"></div><div class="z-risk" id="zRisk"></div><div class="z-ok" id="zOk"></div></div>
-        <div class="tick" id="tLiq"><label>110% liquidation</label></div>
-        <div class="tick t2" id="tTrig"><label>trigger</label></div>
-        <div class="tick" id="tTgt"><label>target</label></div>
-        <div class="needle" id="needle"></div>
-      </div>
-      <div class="scale"><span>100%</span><span>150%</span><span>200%</span><span>250%</span></div>
-      <div class="stats">
-        <div class="stat"><div class="k">Collateral</div><div class="v" id="sColl">–</div><div class="h" id="sCollUsd">&nbsp;</div></div>
-        <div class="stat"><div class="k">Debt</div><div class="v" id="sDebt">–</div><div class="h">MUSD</div></div>
-        <div class="stat"><div class="k">Reserve</div><div class="v" id="sRes">–</div><div class="h">MUSD ready to repay</div></div>
-        <div class="stat"><div class="k">BTC price</div><div class="v" id="sPrice">–</div><div class="h">Mezo oracle</div></div>
-      </div>
-    </section>
+  <div class="banner hide" id="demoBanner"><div>You're viewing <b>a demo vault</b>. Connect your wallet to see or open your own.</div></div>
 
-    <!-- price ladder -->
-    <section class="card">
-      <h2>What BTC must do <span id="dist"></span></h2>
-      <div class="ladder">
-        <div class="rung"><i style="background:var(--btc)"></i><div><b id="pNow">–</b><br/><span>BTC now</span></div><div class="d">live</div></div>
-        <div class="rung"><i style="background:var(--warn)"></i><div><b id="pTrig">–</b><br/><span>Rescue kicks in</span></div><div class="d" id="dTrig"></div></div>
-        <div class="rung"><i style="background:var(--danger)"></i><div><b id="pLiq">–</b><br/><span>Liquidation, without Bulwark</span></div><div class="d" id="dLiq"></div></div>
-        <div class="rung"><i style="background:var(--safe)"></i><div><b id="pProt">–</b><br/><span>Liquidation, after reserve is used</span></div><div class="d" id="dProt"></div></div>
+  <nav class="tabs" id="tabs">
+    <button data-t="health" class="on">Health</button>
+    <button data-t="manage">Manage</button>
+    <button data-t="rescue">Rescue</button>
+    <button data-t="activity">Activity</button>
+  </nav>
+
+  <!-- health -->
+  <section class="pane on" id="p-health">
+    <div class="card">
+      <p class="label">Loan health <span id="updated">loading…</span></p>
+      <div class="status"><div class="ratio" id="icr">–</div><span class="pill" id="pill">…</span></div>
+      <p class="note" id="explain" style="margin-top:8px">Reading the vault from Mezo…</p>
+      <div class="bar" id="bar">
+        <div class="mk" id="mLiq"><label>110%</label></div>
+        <div class="mk" id="mTrig"><label>rescue</label></div>
+        <div class="me" id="mMe"></div>
       </div>
-      <p class="note" style="margin-top:12px">The reserve buys room: every MUSD repaid lowers the price at which Mezo can liquidate you.</p>
-    </section>
+      <div class="grid2">
+        <div><div class="k">Collateral</div><div class="v" id="sColl">–</div><div class="h" id="sCollUsd">&nbsp;</div></div>
+        <div><div class="k">Debt</div><div class="v" id="sDebt">–</div><div class="h">MUSD</div></div>
+        <div><div class="k">Reserve</div><div class="v" id="sRes">–</div><div class="h" id="sResH">MUSD</div></div>
+        <div><div class="k">BTC price</div><div class="v" id="sPrice">–</div><div class="h">Mezo oracle</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="label">What BTC has to do <span id="dist"></span></p>
+      <div class="rung"><div><b id="pNow">–</b><span>BTC now</span></div><div class="d">live</div></div>
+      <div class="rung"><div><b id="pTrig">–</b><span>A keeper rescues you</span></div><div class="d" id="dTrig"></div></div>
+      <div class="rung"><div><b id="pLiq">–</b><span>Liquidation without Bulwark</span></div><div class="d" id="dLiq"></div></div>
+      <div class="rung"><div><b id="pProt">–</b><span>Liquidation after the reserve is used</span></div><div class="d" id="dProt"></div></div>
+    </div>
+  </section>
 
-    <!-- rule + reserve -->
-    <section class="card">
-      <h2>Your rule <span id="ownerTag"></span></h2>
-      <p class="note" id="ruleText">–</p>
-      <div class="rbar"><div id="rFill"></div></div>
-      <p class="note" id="rText">&nbsp;</p>
-      <form id="ruleForm" style="margin-top:14px">
-        <div class="row">
-          <div><label>Trigger %</label><input id="fTrig" inputmode="decimal" /></div>
-          <div><label>Target %</label><input id="fTgt" inputmode="decimal" /></div>
-          <div><label>Fee %</label><input id="fFee" inputmode="decimal" /></div>
-        </div>
-        <div class="actions"><button type="submit" id="saveRule" disabled>Save rule</button></div>
-        <p class="locked" id="ruleLock">Connect the owner wallet to change the rule.</p>
-      </form>
-      <form id="depForm" style="margin-top:16px">
-        <div class="field"><label>Top up reserve (MUSD)</label><input id="fDep" inputmode="decimal" placeholder="100" /></div>
-        <div class="actions"><button type="submit" class="ghost" id="depBtn" disabled>Add to reserve</button></div>
-      </form>
-    </section>
+  <!-- manage -->
+  <section class="pane" id="p-manage">
+    <div class="card">
+      <p class="label">Manage your loan <span id="mTag">owner only</span></p>
+      <p class="note hide" id="mLock" style="margin-bottom:14px">Only the vault owner can change this loan. Anyone can add BTC or top up the reserve.</p>
+      <div class="group">Make it safer</div>
+      <button class="act" data-a="addBtc"><i>₿</i><span>Add BTC<small>Raise your ratio with more collateral</small></span></button>
+      <button class="act" data-a="deposit"><i>+</i><span>Top up reserve<small>More MUSD ready for rescues</small></span></button>
+      <button class="act own" data-a="repay"><i>↓</i><span>Repay from reserve<small>Pay down debt yourself, no fee</small></span></button>
+      <button class="act own" data-a="rule"><i>⚙</i><span>Change rescue rule<small id="ruleSmall">–</small></span></button>
+      <div class="group">Take something out</div>
+      <button class="act own" data-a="borrow"><i>↑</i><span>Borrow more MUSD<small>Lowers your ratio</small></span></button>
+      <button class="act own" data-a="wBtc"><i>₿</i><span>Withdraw BTC<small>Lowers your ratio</small></span></button>
+      <button class="act own" data-a="wRes"><i>−</i><span>Withdraw reserve<small>Less room for rescues</small></span></button>
+      <div class="group">Finish</div>
+      <button class="act own red" data-a="close"><i>✕</i><span>Close loan<small>Repay everything, get all your BTC back</small></span></button>
+      <button class="act own" data-a="claim"><i>↓</i><span>Claim leftover BTC<small>After a liquidation or redemption</small></span></button>
+    </div>
+  </section>
 
-    <!-- rescue -->
-    <section class="card">
-      <h2>Rescue <span>open to anyone</span></h2>
+  <!-- rescue -->
+  <section class="pane" id="p-rescue">
+    <div class="card">
+      <p class="label">Rescue <span>open to anyone</span></p>
       <p class="note" id="rescueText">Checking…</p>
-      <div class="stats" style="grid-template-columns:1fr 1fr;margin:14px 0">
-        <div class="stat"><div class="k">Would repay</div><div class="v" id="wRepay">–</div><div class="h">MUSD</div></div>
-        <div class="stat"><div class="k">Keeper earns</div><div class="v" id="wFee">–</div><div class="h">MUSD</div></div>
-        <div class="stat"><div class="k">Rescues</div><div class="v" id="rCount">–</div><div class="h">this vault</div></div>
-        <div class="stat"><div class="k">Repaid total</div><div class="v" id="rTotal">–</div><div class="h">MUSD</div></div>
+      <div class="grid2" style="margin:14px 0">
+        <div><div class="k">Would repay</div><div class="v" id="wRepay">–</div><div class="h">MUSD</div></div>
+        <div><div class="k">Keeper earns</div><div class="v" id="wFee">–</div><div class="h">MUSD</div></div>
+        <div><div class="k">Rescues</div><div class="v" id="rCount">–</div><div class="h">this vault</div></div>
+        <div><div class="k">Repaid total</div><div class="v" id="rTotal">–</div><div class="h">MUSD</div></div>
       </div>
-      <div class="actions"><button id="rescueBtn" disabled>Rescue this loan</button></div>
-      <p class="locked">Our keeper bot checks every 30 seconds and alerts the owner on Telegram. You can press this too and earn the fee.</p>
-    </section>
-
-    <!-- activity -->
-    <section class="card">
-      <h2>Activity <span id="evCount"></span></h2>
-      <div class="feed" id="feed"><p class="note">Loading history…</p></div>
-    </section>
-
-    <!-- network -->
-    <section class="card">
-      <h2>All Bulwark vaults <span id="vCount"></span></h2>
+      <button id="rescueBtn" disabled>Rescue this loan</button>
+      <p class="faint">Keeper bots check every 30 seconds and alert the owner on Telegram. You can press this too and earn the fee.</p>
+    </div>
+    <div class="card">
+      <p class="label">All Bulwark vaults <span id="vCount"></span></p>
       <table><thead><tr><th>Vault</th><th class="n">Ratio</th><th class="n">Reserve</th></tr></thead><tbody id="vaults"><tr><td colspan="3" class="note">Loading…</td></tr></tbody></table>
-      <div id="openBox" style="margin-top:16px;display:none">
-        <h2 style="margin-top:6px">Open your own vault</h2>
-        <div class="row">
-          <div><label>BTC</label><input id="oColl" inputmode="decimal" value="0.05" /></div>
-          <div><label>Borrow</label><input id="oBorrow" inputmode="decimal" value="2300" /></div>
-          <div><label>Reserve</label><input id="oRes" inputmode="decimal" value="400" /></div>
-        </div>
-        <p class="note" id="oPreview">&nbsp;</p>
-        <div class="actions"><button id="openBtn">Create vault &amp; open loan</button></div>
-        <p class="locked">Mezo's smallest loan is about 2,000 MUSD of debt. Faucet: <a href="https://faucet.test.mezo.org/" target="_blank" rel="noopener">faucet.test.mezo.org</a></p>
-      </div>
-    </section>
+      <form class="lookup" id="lookup"><div class="inp"><input id="vaultIn" placeholder="Any vault address 0x…" spellcheck="false" autocomplete="off" /></div><button class="ghost sm" type="submit">View</button></form>
+    </div>
+  </section>
 
-    <!-- manage -->
-    <section class="card">
-      <h2>Manage your loan <span id="mTag">owner only</span></h2>
-      <p class="note" id="mText">Connect the owner wallet to manage this loan. Anyone can add BTC.</p>
-      <form id="btcForm" style="margin-top:14px">
-        <div class="field"><label>BTC amount</label><input id="fBtc" inputmode="decimal" placeholder="0.005" /></div>
-        <div class="actions"><button type="button" class="ghost" id="addBtcBtn" disabled>Add BTC</button><button type="button" class="ghost own" id="wBtcBtn" disabled>Withdraw BTC</button></div>
-      </form>
-      <form id="musdForm" style="margin-top:16px">
-        <div class="field"><label>MUSD amount</label><input id="fMusd" inputmode="decimal" placeholder="100" /></div>
-        <div class="actions"><button type="button" class="ghost own" id="repayBtn" disabled>Repay from reserve</button><button type="button" class="ghost own" id="wResBtn" disabled>Withdraw reserve</button></div>
-        <div class="actions"><button type="button" class="ghost own" id="borrowBtn" disabled>Borrow more</button></div>
-      </form>
-      <div class="actions" style="margin-top:16px"><button type="button" class="own" id="closeBtn" disabled>Close loan</button><button type="button" class="ghost own" id="claimBtn" disabled>Claim leftover BTC</button></div>
-      <p class="locked" id="mPreview">&nbsp;</p>
-    </section>
-
-    <section class="card span2">
-      <h2>How Bulwark works</h2>
-      <div class="how">
-        <div><b>Borrow and keep a buffer.</b> You open your MUSD loan through your own Bulwark vault, which holds part of the borrowed MUSD as a reserve.</div>
-        <div><b>Set your line.</b> Choose a trigger (say 160%) and a target (175%). Both live on-chain, and only you can change them.</div>
-        <div><b>Anyone can rescue.</b> When BTC falls below your trigger, any keeper can call rescue. The contract checks the live Mezo price, repays just enough MUSD to reach your target, and pays the keeper up to 2%.</div>
-        <div><b>You stay in control.</b> Withdraw the reserve, add BTC, or close the loan whenever you like. Bulwark never takes custody beyond your own vault.</div>
-      </div>
-    </section>
-  </main>
+  <!-- activity -->
+  <section class="pane" id="p-activity">
+    <div class="card">
+      <p class="label">Activity <span id="evCount"></span></p>
+      <div id="feed"><p class="note">Loading history…</p></div>
+    </div>
+  </section>
 
   <footer>
     <span>Bulwark · built on Mezo with MUSD</span>
-    <span><a href="https://github.com/cipoklean/bulwark" target="_blank" rel="noopener">GitHub</a> · <a id="factoryLink" target="_blank" rel="noopener">Factory</a></span>
+    <span><a href="https://github.com/cipoklean/bulwark" target="_blank" rel="noopener">GitHub</a> · <a href="bulwark-pitch-deck.pdf" target="_blank" rel="noopener">Deck</a> · <a id="vaultLink" target="_blank" rel="noopener">Vault</a></span>
   </footer>
+</div>
+
+<div id="sheetRoot">
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { createPublicClient, createWalletClient, custom, http, parseAbi, formatUnits, parseUnits, defineChain, getAddress, isAddress, maxUint256 } from "https://esm.sh/viem@2.21.0";
+import { createPublicClient, createWalletClient, custom, http, parseAbi, formatUnits, parseUnits, defineChain, getAddress, isAddress, decodeEventLog } from "https://esm.sh/viem@2.21.0";
 
 const CHAIN = defineChain({
   id: 31611, name: "Mezo Testnet",
@@ -305,23 +316,16 @@ const CHAIN = defineChain({
   rpcUrls: { default: { http: ["https://rpc.test.mezo.org"] } },
   blockExplorers: { default: { name: "Mezo Explorer", url: "https://explorer.test.mezo.org" } },
 });
-const EXP = "https://explorer.test.mezo.org";
+const EXP = "https://explorer.test.mezo.org", API = "https://api.explorer.test.mezo.org/api/v2";
 const FACTORY = "0x68Eb65479E3396548113F307d11C8Bd66e59025a";
-const FACTORY_BLOCK = 16344826n;
-const DEFAULT_VAULT = "0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5";
+const DEMO = "0xdeC65c629311925074Cc1277cE7f9c6ffD6278e5";
+const ZERO = "0x0000000000000000000000000000000000000000";
 const M = {
-  bo: "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
-  tm: "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
-  musd: "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
-  pf: "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
-  hh: "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6",
-  st: "0x722E4D24FD6Ff8b0AC679450F3D91294607268fA",
+  bo: "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5", tm: "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+  musd: "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503", pf: "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+  hh: "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6", st: "0x722E4D24FD6Ff8b0AC679450F3D91294607268fA",
 };
-const factoryAbi = parseAbi([
-  "function allVaults() view returns (address[])",
-  "function vaultOf(address) view returns (address)",
-  "function createVault() returns (address)",
-]);
+const factoryAbi = parseAbi(["function allVaults() view returns (address[])", "function vaultOf(address) view returns (address)", "function createVault() returns (address)"]);
 const vaultAbi = parseAbi([
   "function owner() view returns (address)",
   "function rule() view returns (uint64 triggerICR, uint64 targetICR, uint16 feeBps)",
@@ -333,6 +337,7 @@ const vaultAbi = parseAbi([
   "function rescue(address upperHint, address lowerHint) returns (uint256 repaid, uint256 fee)",
   "function setRule(uint256 triggerICR, uint256 targetICR, uint256 feeBps)",
   "function depositReserve(uint256 amount)",
+  "function openLoan(uint256 borrowAmount, uint256 keepAsReserve, address upperHint, address lowerHint) payable",
   "function addCollateral(address upperHint, address lowerHint) payable",
   "function withdrawCollateral(uint256 amount, address upperHint, address lowerHint)",
   "function borrowMore(uint256 amount, address upperHint, address lowerHint)",
@@ -340,7 +345,6 @@ const vaultAbi = parseAbi([
   "function withdrawReserve(uint256 amount)",
   "function closeLoan()",
   "function claimCollateral()",
-  "function openLoan(uint256 borrowAmount, uint256 keepAsReserve, address upperHint, address lowerHint) payable",
   "event LoanOpened(uint256 collateral, uint256 borrowed, uint256 keptAsReserve)",
   "event RuleSet(uint256 triggerICR, uint256 targetICR, uint256 feeBps)",
   "event ReserveDeposited(address indexed from, uint256 amount)",
@@ -352,33 +356,83 @@ const vaultAbi = parseAbi([
 const tmAbi = parseAbi(["function getCurrentICR(address, uint256) view returns (uint256)"]);
 const pfAbi = parseAbi(["function fetchPrice() view returns (uint256)"]);
 const erc20 = parseAbi(["function allowance(address,address) view returns (uint256)", "function approve(address,uint256) returns (bool)", "function balanceOf(address) view returns (uint256)"]);
-const hhAbi = parseAbi([
-  "function computeNominalCR(uint256 coll, uint256 debt) pure returns (uint256)",
-  "function getApproxHint(uint256 cr, uint256 numTrials, uint256 seed) view returns (address hint, uint256 diff, uint256 latestRandomSeed)",
-]);
+const hhAbi = parseAbi(["function computeNominalCR(uint256 coll, uint256 debt) pure returns (uint256)", "function getApproxHint(uint256 cr, uint256 numTrials, uint256 seed) view returns (address hint, uint256 diff, uint256 latestRandomSeed)"]);
 const stAbi = parseAbi(["function findInsertPosition(uint256 nicr, address prev, address next) view returns (address, address)"]);
 const boAbi = parseAbi(["function getBorrowingFee(uint256) view returns (uint256)"]);
 
 const pub = createPublicClient({ chain: CHAIN, transport: http() });
-let wallet = null, account = null, state = {};
 const $ = (id) => document.getElementById(id);
 const E = 10n ** 18n;
-const n = (x) => Number(formatUnits(x, 18));
-const fmt = (x, d = 2) => x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
-const usd = (x) => "$" + x.toLocaleString("en-US", { maximumFractionDigits: 0 });
+const n = (x) => Number(formatUnits(x ?? 0n, 18));
+const fmt = (x, d = 2) => (isFinite(x) ? x : 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const usd = (x) => "$" + (x || 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 const pct = (x) => fmt(n(x) * 100, 1);
 const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
-const toast = (m, ms = 3800) => { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), ms); };
+const toast = (m, ms = 4000) => { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), ms); };
+const val = (id) => { const v = ($(id).value || "").trim().replace(",", "."); try { return v ? parseUnits(v, 18) : 0n; } catch { return 0n; } };
 
+let provider = null, wallet = null, account = null, myVault = null, state = null;
 const params = new URLSearchParams(location.search);
-let vault = isAddress(params.get("vault") || "") ? getAddress(params.get("vault")) : DEFAULT_VAULT;
-$("vaultIn").value = vault;
-$("factoryLink").href = `${EXP}/address/${FACTORY}`;
-$("factoryLink").textContent = "Factory " + short(FACTORY);
+let vault = isAddress(params.get("vault") || "") ? getAddress(params.get("vault")) : DEMO;
 
-// meter mapping: 100% .. 250%
-const pos = (ratio) => Math.max(0, Math.min(100, ((ratio - 1) / 1.5) * 100));
+/* ---------------- wallet discovery (EIP-6963 + injected) ---------------- */
+const found = new Map();
+window.addEventListener("eip6963:announceProvider", (e) => found.set(e.detail.info.uuid, e.detail));
+window.dispatchEvent(new Event("eip6963:requestProvider"));
 
+function walletSheet() {
+  const here = location.host + location.pathname;
+  const url = encodeURIComponent(location.href);
+  const list = [...found.values()];
+  if (!list.length && window.ethereum) list.push({ info: { name: "Browser wallet", icon: "" }, provider: window.ethereum });
+  const inj = list.map((w, i) => `<button class="wl" data-i="${i}">${w.info.icon ? `<img src="${w.info.icon}" alt="">` : `<span class="ph">W</span>`}<span>${w.info.name}<small>Detected in this browser</small></span></button>`).join("");
+  const apps = `
+    <a class="wl" href="https://metamask.app.link/dapp/${here}"><span class="ph">M</span><span>Open in MetaMask<small>Opens this page inside the MetaMask app</small></span></a>
+    <a class="wl" href="okx://wallet/dapp/url?dappUrl=${url}"><span class="ph">O</span><span>Open in OKX Wallet<small>Opens this page inside OKX Wallet</small></span></a>
+    <a class="wl" href="https://link.trustwallet.com/open_url?coin_id=60&url=${url}"><span class="ph">T</span><span>Open in Trust Wallet<small>Opens this page inside Trust Wallet</small></span></a>
+    <button class="wl ghost" id="copyLink"><span class="ph">↗</span><span>Copy page link<small>Paste it into your wallet app's browser</small></span></button>`;
+  openSheet(`<h2>Connect a wallet</h2>
+    <p class="note">${list.length ? "Pick your wallet." : "This browser has no wallet. Phone browsers like Chrome can't sign transactions, so open Bulwark inside your wallet app."}</p>
+    ${inj}${list.length ? '<div class="group" style="margin-top:14px">Or use a wallet app</div>' : ""}${apps}`);
+  document.querySelectorAll(".wl[data-i]").forEach((b) => b.onclick = () => connect(list[+b.dataset.i].provider));
+  $("copyLink").onclick = async () => { try { await navigator.clipboard.writeText(location.href); toast("Link copied. Paste it into your wallet's browser."); } catch { toast(location.href, 8000); } };
+}
+
+async function ensureChain(p) {
+  try { await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x7b7b" }] }); }
+  catch (e) {
+    if (e.code === 4902 || e.code === -32603 || /Unrecognized|not been added|Unknown chain/i.test(e.message || "")) {
+      await p.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x7b7b", chainName: "Mezo Testnet", nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 }, rpcUrls: ["https://rpc.test.mezo.org"], blockExplorerUrls: [EXP] }] });
+    } else throw e;
+  }
+}
+
+async function connect(p) {
+  closeSheet();
+  try {
+    provider = p;
+    [account] = await p.request({ method: "eth_requestAccounts" });
+    account = getAddress(account);
+    await ensureChain(p);
+    wallet = createWalletClient({ chain: CHAIN, transport: custom(p), account });
+    p.on?.("accountsChanged", () => location.reload());
+    p.on?.("chainChanged", () => location.reload());
+    $("connect").textContent = short(account); $("connect").className = "sm ghost";
+    const mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
+    myVault = mine === ZERO ? null : getAddress(mine);
+    if (myVault) { vault = myVault; history.replaceState(null, "", "?vault=" + vault); toast("Connected. Showing your vault."); }
+    else toast("Connected. Next: open your vault.");
+    await refresh(true);
+  } catch (e) { toast(e.shortMessage || e.message || "Connection failed", 6000); }
+}
+$("connect").onclick = $("st1b").onclick = () => account ? toast("Connected as " + short(account)) : walletSheet();
+
+/* ---------------- sheet ---------------- */
+function openSheet(html) { $("sheetBody").innerHTML = html; $("sheetRoot").classList.add("open"); }
+function closeSheet() { $("sheetRoot").classList.remove("open"); }
+$("scrim").onclick = closeSheet;
+
+/* ---------------- chain reads ---------------- */
 async function hints(coll, debt) {
   const nicr = await pub.readContract({ address: M.hh, abi: hhAbi, functionName: "computeNominalCR", args: [coll, debt] });
   const [h] = await pub.readContract({ address: M.hh, abi: hhAbi, functionName: "getApproxHint", args: [nicr, 50n, 42n] });
@@ -387,123 +441,142 @@ async function hints(coll, debt) {
 
 async function loadVault() {
   const v = vault;
+  const r = (fn, a = []) => pub.readContract({ address: v, abi: vaultAbi, functionName: fn, args: a });
   const [owner, rule, reserve, loan, price, count, total] = await Promise.all([
-    pub.readContract({ address: v, abi: vaultAbi, functionName: "owner" }),
-    pub.readContract({ address: v, abi: vaultAbi, functionName: "rule" }),
-    pub.readContract({ address: v, abi: vaultAbi, functionName: "reserve" }),
-    pub.readContract({ address: v, abi: vaultAbi, functionName: "loan" }),
-    pub.readContract({ address: M.pf, abi: pfAbi, functionName: "fetchPrice" }),
-    pub.readContract({ address: v, abi: vaultAbi, functionName: "rescueCount" }),
-    pub.readContract({ address: v, abi: vaultAbi, functionName: "totalRepaidByRescues" }),
+    r("owner"), r("rule"), r("reserve"), r("loan"),
+    pub.readContract({ address: M.pf, abi: pfAbi, functionName: "fetchPrice" }), r("rescueCount"), r("totalRepaidByRescues"),
   ]);
-  const icr = await pub.readContract({ address: M.tm, abi: tmAbi, functionName: "getCurrentICR", args: [v, price] });
+  const icr = loan[1] > 0n ? await pub.readContract({ address: M.tm, abi: tmAbi, functionName: "getCurrentICR", args: [v, price] }) : 0n;
   let prev = [false, icr, 0n, 0n];
   try { prev = (await pub.simulateContract({ address: v, abi: vaultAbi, functionName: "previewRescue" })).result; } catch {}
   if (v !== vault) return;
-  state = { owner, rule: { trig: rule[0], tgt: rule[1], fee: rule[2] }, reserve, coll: loan[0], debt: loan[1], price, icr, count, total, prev };
-  render();
+  state = { owner, trig: n(BigInt(rule[0])), tgt: n(BigInt(rule[1])), fee: Number(rule[2]), reserve, coll: loan[0], debt: loan[1], price, icr, count, total, prev };
 }
 
+const isOwner = () => account && state && account.toLowerCase() === state.owner.toLowerCase();
+const fullRescueNeed = (s) => {
+  const coll = n(s.coll), debt = n(s.debt);
+  if (!s.trig || !s.tgt || !coll) return 0;
+  const trigPrice = (debt * s.trig) / coll;
+  return Math.max(0, debt - (coll * trigPrice) / s.tgt);
+};
+
+/* ---------------- render ---------------- */
+function setStep(id, cls, sum) { const el = $(id); el.className = "step " + cls; if (sum) $(id + "s").textContent = sum; }
+
+function renderSetup() {
+  const mine = myVault && state && vault === myVault ? state : null;
+  const open = mine && mine.debt > 0n;
+  const ruled = open && mine.trig > 0;
+  const need = open ? fullRescueNeed(mine) : 0;
+  const filled = ruled && n(mine.reserve) >= need * 0.999 && need > 0;
+  let done = 0;
+  if (!account) { setStep("st1", "active"); setStep("st2", "locked"); setStep("st3", "locked"); setStep("st4", "locked"); }
+  else {
+    done = 1; setStep("st1", "done", "Connected as " + short(account));
+    if (!open) { setStep("st2", "active"); setStep("st3", "locked"); setStep("st4", "locked"); }
+    else {
+      done = 2; setStep("st2", "done", `${fmt(n(mine.coll), 4)} BTC backing ${fmt(n(mine.debt), 0)} MUSD`);
+      if (!ruled) { setStep("st3", "active"); setStep("st4", "locked"); }
+      else {
+        done = 3; setStep("st3", "done", `Rescue below ${fmt(mine.trig * 100, 0)}%, back to ${fmt(mine.tgt * 100, 0)}%`);
+        if (!filled) {
+          setStep("st4", "active", `${fmt(n(mine.reserve), 0)} of about ${fmt(need, 0)} MUSD needed for one full rescue`);
+          if (!$("fDep").value) $("fDep").value = Math.ceil(need - n(mine.reserve));
+          depPreview();
+        } else { done = 4; setStep("st4", "done", `${fmt(n(mine.reserve), 0)} MUSD ready, enough for a full rescue`); }
+      }
+    }
+  }
+  $("setupCount").textContent = done === 4 ? "✓ you're protected" : `${done} of 4 done`;
+  $("demoBanner").classList.toggle("hide", !(vault === DEMO && myVault !== DEMO));
+  openPreview();
+}
+
+const pos = (r) => Math.max(0, Math.min(100, ((r - 1) / 1.5) * 100)); // 100%..250%
+
 function render() {
-  const s = state, coll = n(s.coll), debt = n(s.debt), price = n(s.price), ratio = n(s.icr);
-  const trig = n(BigInt(s.rule.trig)), tgt = n(BigInt(s.rule.tgt)), res = n(s.reserve);
+  const s = state; if (!s) return;
+  const coll = n(s.coll), debt = n(s.debt), price = n(s.price), ratio = n(s.icr), res = n(s.reserve);
   const open = debt > 0;
-  $("icr").innerHTML = open ? `${fmt(ratio * 100, 1)}<small>%</small>` : `—<small>no loan</small>`;
-  const pill = $("pill");
+  $("icr").innerHTML = open ? `${fmt(ratio * 100, 1)}<small>%</small>` : `–<small> no loan</small>`;
   let cls = "safe", label = "Protected";
-  if (!open) { cls = "warn"; label = "No open loan"; }
+  if (!open) { cls = "warn"; label = "No loan"; }
   else if (ratio < 1.1) { cls = "danger"; label = "Liquidatable"; }
-  else if (trig && ratio < trig) { cls = "danger"; label = "Rescue ready"; }
-  else if (trig && ratio < trig + 0.1) { cls = "warn"; label = "Close to trigger"; }
-  else if (!trig) { cls = "warn"; label = "No rule set"; }
-  pill.className = "pill " + cls; pill.textContent = label;
+  else if (s.trig && ratio < s.trig) { cls = "danger"; label = "Rescue ready"; }
+  else if (!s.trig) { cls = "warn"; label = "No rule"; }
+  else if (res < 1) { cls = "warn"; label = "Reserve empty"; }
+  else if (ratio < s.trig + 0.1) { cls = "warn"; label = "Near trigger"; }
+  $("pill").className = "pill " + cls; $("pill").textContent = label;
 
   const liqPrice = coll ? (debt * 1.1) / coll : 0;
-  const trigPrice = coll && trig ? (debt * trig) / coll : 0;
+  const trigPrice = coll && s.trig ? (debt * s.trig) / coll : 0;
   const usable = Math.min(res, Math.max(0, debt - 2000));
   const protPrice = coll ? ((debt - usable) * 1.1) / coll : 0;
-  const drop = (p) => (price && p ? `${fmt((1 - p / price) * 100, 1)}% away` : "");
-  $("explain").textContent = open
-    ? `Your ${fmt(coll, 4)} BTC backs ${fmt(debt, 0)} MUSD. Mezo liquidates below 110%; Bulwark steps in at ${fmt(trig * 100, 0)}% and repays back to ${fmt(tgt * 100, 0)}%.`
-    : "This vault has no open loan yet.";
-
-  $("zLiq").style.width = pos(1.1) + "%";
-  $("zRisk").style.width = (pos(trig || 1.5) - pos(1.1)) + "%";
-  $("zOk").style.width = (100 - pos(trig || 1.5)) + "%";
-  $("tLiq").style.left = pos(1.1) + "%";
-  $("tTrig").style.left = pos(trig) + "%"; $("tTrig").querySelector("label").textContent = `trigger ${fmt(trig * 100, 0)}%`;
-  $("tTgt").style.left = pos(tgt) + "%"; $("tTgt").querySelector("label").textContent = `target ${fmt(tgt * 100, 0)}%`;
-  $("needle").style.left = pos(open ? ratio : 1) + "%";
-
-  $("sColl").textContent = fmt(coll, 4) + " BTC";
-  $("sCollUsd").textContent = usd(coll * price);
-  $("sDebt").textContent = fmt(debt, 0);
-  $("sRes").textContent = fmt(res, 0);
+  const away = (p) => (price && p ? `${fmt((1 - p / price) * 100, 1)}% drop` : "");
+  $("explain").textContent = open ? `${fmt(coll, 4)} BTC backs ${fmt(debt, 0)} MUSD. A keeper steps in below ${fmt(s.trig * 100, 0)}% and repays back to ${fmt(s.tgt * 100, 0)}%.` : "This vault has no open loan.";
+  $("mLiq").style.left = pos(1.1) + "%";
+  $("mTrig").style.left = pos(s.trig || 1.1) + "%"; $("mTrig").querySelector("label").textContent = `rescue ${fmt(s.trig * 100, 0)}%`;
+  $("mTrig").classList.toggle("hide", !s.trig);
+  $("mMe").style.left = pos(open ? ratio : 1) + "%";
+  $("sColl").textContent = fmt(coll, 4) + " BTC"; $("sCollUsd").textContent = usd(coll * price);
+  $("sDebt").textContent = fmt(debt, 0); $("sRes").textContent = fmt(res, 0);
+  const need = fullRescueNeed(s);
+  $("sResH").textContent = need ? `${fmt(Math.min(100, (res / need) * 100), 0)}% of a full rescue` : "MUSD";
   $("sPrice").textContent = usd(price);
-
   $("pNow").textContent = usd(price);
-  $("pTrig").textContent = trigPrice ? usd(trigPrice) : "–"; $("dTrig").textContent = drop(trigPrice);
-  $("pLiq").textContent = liqPrice ? usd(liqPrice) : "–"; $("dLiq").textContent = drop(liqPrice);
-  $("pProt").textContent = protPrice ? usd(protPrice) : "–"; $("dProt").textContent = drop(protPrice);
-  $("dist").textContent = trigPrice ? `${fmt((1 - trigPrice / price) * 100, 1)}% to trigger` : "";
+  $("pTrig").textContent = trigPrice ? usd(trigPrice) : "–"; $("dTrig").textContent = away(trigPrice);
+  $("pLiq").textContent = liqPrice ? usd(liqPrice) : "–"; $("dLiq").textContent = away(liqPrice);
+  $("pProt").textContent = protPrice ? usd(protPrice) : "–"; $("dProt").textContent = away(protPrice);
+  $("dist").textContent = trigPrice ? `${fmt((1 - trigPrice / price) * 100, 1)}% to rescue` : "";
 
-  $("ruleText").textContent = trig
-    ? `Rescue when the ratio drops below ${fmt(trig * 100, 0)}%, repay back to ${fmt(tgt * 100, 0)}%, keeper fee ${fmt(Number(s.rule.fee) / 100, 2)}%.`
-    : "No rule set yet.";
-  const need = trig && tgt ? Math.max(0, debt - (coll * trigPrice) / tgt) : 0; // repay needed for one full rescue from trigger
-  $("rFill").style.width = Math.min(100, need ? (res / need) * 100 : 100) + "%";
-  $("rText").textContent = need ? `${fmt(res, 0)} MUSD in reserve covers ${res >= need ? "a full rescue" : fmt((res / need) * 100, 0) + "% of a rescue"} from the trigger (about ${fmt(need, 0)} MUSD).` : "";
-  if (!$("fTrig").value || document.activeElement.tagName !== "INPUT") {
-    $("fTrig").value = fmt(trig * 100, 0); $("fTgt").value = fmt(tgt * 100, 0); $("fFee").value = fmt(Number(s.rule.fee) / 100, 2);
-  }
-  const isOwner = account && account.toLowerCase() === s.owner.toLowerCase();
-  $("ownerTag").textContent = isOwner ? "you own this vault" : "owner " + short(s.owner);
-  $("saveRule").disabled = !isOwner; $("ruleLock").style.display = isOwner ? "none" : "block";
-  $("depBtn").disabled = !account;
-  $("addBtcBtn").disabled = !account || !open;
-  document.querySelectorAll("button.own").forEach((b) => b.disabled = !isOwner);
-  if (isOwner && !open) { ["wBtcBtn","repayBtn","borrowBtn","closeBtn"].forEach((id) => $(id).disabled = true); }
-  $("mTag").textContent = isOwner ? "you own this vault" : "owner only";
-  const toClose = Math.max(0, debt - 200 - res);
-  $("mText").textContent = !isOwner ? "Connect the owner wallet to manage this loan. Anyone can add BTC."
-    : open ? `Closing repays ${fmt(debt - 200, 0)} MUSD (Mezo refunds its 200 MUSD deposit). ${toClose > 0 ? `Your reserve is ${fmt(toClose, 0)} MUSD short, so that much comes from your wallet first.` : "Your reserve covers it."}`
-    : "No open loan. If Mezo liquidated or redeemed it, claim any leftover BTC.";
+  const own = isOwner();
+  $("mTag").textContent = own ? "you own this vault" : "owner " + short(s.owner);
+  $("mLock").classList.toggle("hide", own);
+  document.querySelectorAll(".act.own").forEach((b) => b.disabled = !own);
+  $("ruleSmall").textContent = s.trig ? `Now ${fmt(s.trig * 100, 0)}% → ${fmt(s.tgt * 100, 0)}%, fee ${fmt(s.fee / 100, 2)}%` : "Not set";
 
   const [can, , repay, fee] = s.prev;
-  $("wRepay").textContent = fmt(n(repay), 2); $("wFee").textContent = fmt(n(fee), 2);
+  $("wRepay").textContent = fmt(n(repay)); $("wFee").textContent = fmt(n(fee));
   $("rCount").textContent = s.count.toString(); $("rTotal").textContent = fmt(n(s.total), 0);
-  $("rescueText").textContent = can
-    ? `This loan is below its trigger. A rescue repays ${fmt(n(repay), 2)} MUSD from the reserve and lifts it to about ${fmt(tgt * 100, 0)}%.`
-    : open ? `Healthy. A rescue unlocks if the ratio falls below ${fmt(trig * 100, 0)}%, at about ${usd(trigPrice)} BTC.` : "Nothing to rescue.";
+  $("rescueText").textContent = can ? `This loan is below its trigger. A rescue repays ${fmt(n(repay))} MUSD from the reserve and lifts it to about ${fmt(s.tgt * 100, 0)}%.`
+    : open ? `Healthy. A rescue unlocks if BTC falls to about ${usd(trigPrice)}.` : "Nothing to rescue.";
   $("rescueBtn").disabled = !can;
-  $("updated").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  $("vaultLink").href = `${EXP}/address/${vault}`; $("vaultLink").textContent = "Vault " + short(vault);
+  $("updated").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 async function loadFeed() {
   const v = vault;
-  let logs = [];
-  try { logs = await pub.getContractEvents({ address: v, abi: vaultAbi, fromBlock: FACTORY_BLOCK, toBlock: "latest" }); } catch (e) { $("feed").innerHTML = `<p class="note">History unavailable right now.</p>`; return; }
-  if (v !== vault) return;
-  const rows = logs.reverse().slice(0, 12).map((l) => {
-    const a = l.args; let ic = "•", t = l.eventName, s = "";
-    switch (l.eventName) {
-      case "Rescued": ic = "🛡️"; t = `Rescued ${pct(a.icrBefore)}% → ${pct(a.icrAfter)}%`; s = `repaid ${fmt(n(a.repaid))} MUSD · keeper ${short(a.keeper)} earned ${fmt(n(a.fee))}`; break;
-      case "LoanOpened": ic = "₿"; t = `Loan opened`; s = `${fmt(n(a.collateral), 4)} BTC · borrowed ${fmt(n(a.borrowed), 0)} · reserve ${fmt(n(a.keptAsReserve), 0)}`; break;
-      case "RuleSet": ic = "⚙"; t = `Rule set`; s = `trigger ${pct(a.triggerICR)}% · target ${pct(a.targetICR)}% · fee ${fmt(Number(a.feeBps) / 100)}%`; break;
-      case "ReserveDeposited": ic = "+"; t = `Reserve topped up`; s = `${fmt(n(a.amount))} MUSD from ${short(a.from)}`; break;
-      case "ReserveWithdrawn": ic = "−"; t = `Reserve withdrawn`; s = `${fmt(n(a.amount))} MUSD`; break;
-      case "CollateralAdded": ic = "+"; t = `BTC added`; s = `${fmt(n(a.amount), 4)} BTC from ${short(a.from)}`; break;
-      case "LoanClosed": ic = "✓"; t = `Loan closed`; s = `${fmt(n(a.collateralReturned), 4)} BTC returned`; break;
+  try {
+    const res = await fetch(`${API}/addresses/${v}/logs`);
+    if (!res.ok) throw new Error(res.status);
+    const items = (await res.json()).items || [];
+    if (v !== vault) return;
+    const rows = [];
+    for (const it of items) {
+      let ev; try { ev = decodeEventLog({ abi: vaultAbi, data: it.data, topics: it.topics.filter(Boolean) }); } catch { continue; }
+      const a = ev.args; let ic = "•", t = ev.eventName, s = "";
+      switch (ev.eventName) {
+        case "Rescued": ic = "🛡️"; t = `Rescued ${pct(a.icrBefore)}% → ${pct(a.icrAfter)}%`; s = `repaid ${fmt(n(a.repaid))} MUSD · keeper earned ${fmt(n(a.fee))}`; break;
+        case "LoanOpened": ic = "₿"; t = "Loan opened"; s = `${fmt(n(a.collateral), 4)} BTC · borrowed ${fmt(n(a.borrowed), 0)} · reserve ${fmt(n(a.keptAsReserve), 0)}`; break;
+        case "RuleSet": ic = "⚙"; t = "Rule set"; s = `${pct(a.triggerICR)}% → ${pct(a.targetICR)}% · fee ${fmt(Number(a.feeBps) / 100)}%`; break;
+        case "ReserveDeposited": ic = "+"; t = "Reserve topped up"; s = `${fmt(n(a.amount))} MUSD`; break;
+        case "ReserveWithdrawn": ic = "−"; t = "Reserve withdrawn"; s = `${fmt(n(a.amount))} MUSD`; break;
+        case "CollateralAdded": ic = "+"; t = "BTC added"; s = `${fmt(n(a.amount), 4)} BTC`; break;
+        case "LoanClosed": ic = "✓"; t = "Loan closed"; s = `${fmt(n(a.collateralReturned), 4)} BTC returned`; break;
+      }
+      const when = it.block_timestamp ? new Date(it.block_timestamp).toLocaleDateString([], { month: "short", day: "numeric" }) : "";
+      rows.push(`<div class="ev"><div class="ic">${ic}</div><div><div class="t">${t}</div><div class="s">${s}${when ? " · " + when : ""}</div></div><a href="${EXP}/tx/${it.transaction_hash}" target="_blank" rel="noopener">tx ↗</a></div>`);
     }
-    return `<div class="ev"><div class="ic">${ic}</div><div><div class="t">${t}</div><div class="s">${s}</div></div><a href="${EXP}/tx/${l.transactionHash}" target="_blank" rel="noopener">tx ↗</a></div>`;
-  });
-  $("feed").innerHTML = rows.join("") || `<p class="note">No activity yet.</p>`;
-  $("evCount").textContent = logs.length ? `${logs.length} events` : "";
+    $("feed").innerHTML = rows.join("") || `<p class="note">No activity yet.</p>`;
+    $("evCount").textContent = rows.length ? `${rows.length} events` : "";
+  } catch { if (v === vault) $("feed").innerHTML = `<p class="note">History is unavailable right now. <a href="${EXP}/address/${v}?tab=logs" target="_blank" rel="noopener">See it on the explorer ↗</a></p>`; }
 }
 
 async function loadVaults() {
   const list = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "allVaults" });
-  const price = state.price ?? (await pub.readContract({ address: M.pf, abi: pfAbi, functionName: "fetchPrice" }));
+  const price = state?.price ?? (await pub.readContract({ address: M.pf, abi: pfAbi, functionName: "fetchPrice" }));
   const rows = await Promise.all(list.map(async (v) => {
     const [icr, res] = await Promise.all([
       pub.readContract({ address: M.tm, abi: tmAbi, functionName: "getCurrentICR", args: [v, price] }).catch(() => 0n),
@@ -512,46 +585,33 @@ async function loadVaults() {
     return { v, icr, res };
   }));
   $("vCount").textContent = `${list.length} live`;
-  $("vaults").innerHTML = rows.map((r) => `<tr data-v="${r.v}" class="${r.v.toLowerCase() === vault.toLowerCase() ? "me" : ""}"><td>${short(r.v)}</td><td class="n">${r.icr > 0n && r.icr < 10n ** 30n ? pct(r.icr) + "%" : "—"}</td><td class="n">${fmt(n(r.res), 0)}</td></tr>`).join("") || `<tr><td colspan="3" class="note">No vaults yet.</td></tr>`;
+  $("vaults").innerHTML = rows.map((r) => `<tr data-v="${r.v}" class="${r.v.toLowerCase() === vault.toLowerCase() ? "me" : ""}"><td>${short(r.v)}${myVault && r.v.toLowerCase() === myVault.toLowerCase() ? " (you)" : ""}</td><td class="n">${r.icr > 0n && r.icr < 10n ** 30n ? pct(r.icr) + "%" : "–"}</td><td class="n">${fmt(n(r.res), 0)}</td></tr>`).join("") || `<tr><td colspan="3" class="note">No vaults yet.</td></tr>`;
   document.querySelectorAll("tr[data-v]").forEach((tr) => tr.onclick = () => switchVault(tr.dataset.v));
 }
 
 function switchVault(v) {
-  vault = getAddress(v); $("vaultIn").value = vault;
+  vault = getAddress(v); $("vaultIn").value = "";
   history.replaceState(null, "", "?vault=" + vault);
   $("feed").innerHTML = `<p class="note">Loading history…</p>`;
-  refresh(true);
+  tab("health"); refresh(true); scrollTo({ top: $("tabs").offsetTop - 70, behavior: "smooth" });
 }
 
 async function refresh(full) {
   try { await loadVault(); } catch (e) { console.error(e); toast("Couldn't read that vault. Is the address right?"); return; }
-  if (full) loadFeed(); loadVaults().catch(console.error);
+  render(); renderSetup();
+  if (full) loadFeed();
+  loadVaults().catch(console.error);
 }
 
-// wallet
-async function ensureChain() {
-  try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x7b7b" }] }); }
-  catch (e) {
-    if (e.code === 4902 || /Unrecognized|not been added/i.test(e.message)) {
-      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x7b7b", chainName: "Mezo Testnet", nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 }, rpcUrls: ["https://rpc.test.mezo.org"], blockExplorerUrls: [EXP] }] });
-    } else throw e;
-  }
-}
-$("connect").onclick = async () => {
-  if (!window.ethereum) return toast("Open this page in a wallet browser (MetaMask, Rabby, OKX) to connect.");
-  try {
-    [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
-    await ensureChain();
-    wallet = createWalletClient({ chain: CHAIN, transport: custom(window.ethereum), account });
-    $("connect").textContent = short(account); $("connect").className = "ghost";
-    const mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
-    if (mine !== "0x0000000000000000000000000000000000000000") { switchVault(mine); toast("Showing your vault."); }
-    else { $("openBox").style.display = "block"; render(); toast("No vault yet. You can open one below."); }
-  } catch (e) { toast(e.shortMessage || e.message); }
-};
+/* ---------------- tabs ---------------- */
+function tab(t) { document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.id === "p-" + t)); }
+document.querySelectorAll("#tabs button").forEach((b) => b.onclick = () => tab(b.dataset.t));
 
+/* ---------------- tx helper ---------------- */
 async function send(label, req) {
+  if (!wallet) { walletSheet(); return false; }
   try {
+    await ensureChain(provider);
     toast(label + ": confirm in your wallet…", 60000);
     const hash = await wallet.writeContract({ ...req, account, chain: CHAIN });
     toast(label + ": waiting for Mezo…", 60000);
@@ -560,129 +620,176 @@ async function send(label, req) {
     toast(label + " done ✓");
     await refresh(true);
     return true;
-  } catch (e) { toast(e.shortMessage || e.message, 6000); return false; }
+  } catch (e) { toast(e.shortMessage || e.message, 7000); return false; }
 }
-
-$("ruleForm").onsubmit = async (ev) => {
-  ev.preventDefault();
-  const t = parseUnits(String(Number($("fTrig").value) / 100), 18), g = parseUnits(String(Number($("fTgt").value) / 100), 18);
-  const f = BigInt(Math.round(Number($("fFee").value) * 100));
-  if (Number($("fTrig").value) < 115) return toast("Trigger must be at least 115%.");
-  if (g <= t) return toast("Target must be above the trigger.");
-  if (f > 200n) return toast("Fee can be at most 2%.");
-  await send("Save rule", { address: vault, abi: vaultAbi, functionName: "setRule", args: [t, g, f] });
-};
-
-$("depForm").onsubmit = async (ev) => {
-  ev.preventDefault();
-  const amt = parseUnits($("fDep").value || "0", 18);
-  if (amt === 0n) return toast("Enter an amount.");
+async function approveIfNeeded(amount) {
   const al = await pub.readContract({ address: M.musd, abi: erc20, functionName: "allowance", args: [account, vault] });
-  if (al < amt && !(await send("Approve MUSD", { address: M.musd, abi: erc20, functionName: "approve", args: [vault, amt] }))) return;
-  await send("Top up reserve", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [amt] });
-};
+  return al >= amount || send("Approve MUSD", { address: M.musd, abi: erc20, functionName: "approve", args: [vault, amount] });
+}
+const ratioAfter = (cc, dd) => dd > 0n ? fmt((n(cc) * n(state.price) / n(dd)) * 100, 1) + "%" : "–";
+const safeAfter = (cc, dd) => dd === 0n || (cc * state.price) / dd >= 115n * 10n ** 16n;
 
-$("rescueBtn").onclick = async () => {
-  if (!wallet) return toast("Connect a wallet to rescue and earn the fee.");
-  const [, , repay] = state.prev;
-  const [up, low] = await hints(state.coll, state.debt - repay);
-  await send("Rescue", { address: vault, abi: vaultAbi, functionName: "rescue", args: [up, low], gas: 3_000_000n });
-};
-
-async function openPreview() {
-  const c = Number($("oColl").value), b = Number($("oBorrow").value), r = Number($("oRes").value);
-  const p = state.price ? n(state.price) : 0;
-  if (!p || !c || !b) return;
-  const debt = b * 1.001 + 200; // approx; exact fee read at submit
-  $("oPreview").textContent = `Opens near ${fmt((c * p / debt) * 100, 0)}%. ${fmt(b - r, 0)} MUSD goes to your wallet, ${fmt(r, 0)} stays as reserve.`;
+/* ---------------- step 2: open ---------------- */
+function openPreview() {
+  if (!state) return;
+  const c = Number($("oColl").value), b = Number($("oBorrow").value), r = Number($("oRes").value), p = n(state.price);
+  if (!p || !c || !b) { $("oPreview").innerHTML = "&nbsp;"; return; }
+  const debt = b * 1.001 + 200;
+  $("oPreview").innerHTML = `Opens near <b>${fmt((c * p / debt) * 100, 0)}%</b>. <b>${fmt(b - r, 0)}</b> MUSD to your wallet, <b>${fmt(r, 0)}</b> kept as reserve.`;
 }
 ["oColl", "oBorrow", "oRes"].forEach((id) => $(id).addEventListener("input", openPreview));
-
 $("openBtn").onclick = async () => {
-  if (!wallet) return toast("Connect a wallet first.");
+  if (!wallet) return walletSheet();
+  const coll = val("oColl"), borrow = val("oBorrow"), res = val("oRes");
+  if (!coll || !borrow) return toast("Enter the BTC and the MUSD to borrow.");
+  if (res >= borrow) return toast("The reserve has to be smaller than what you borrow.");
   let mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
-  if (mine === "0x0000000000000000000000000000000000000000") {
+  if (mine === ZERO) {
     if (!(await send("Create vault", { address: FACTORY, abi: factoryAbi, functionName: "createVault" }))) return;
     mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
   }
-  const coll = parseUnits($("oColl").value, 18), borrow = parseUnits($("oBorrow").value, 18), res = parseUnits($("oRes").value || "0", 18);
+  myVault = vault = getAddress(mine); history.replaceState(null, "", "?vault=" + vault);
   const fee = await pub.readContract({ address: M.bo, abi: boAbi, functionName: "getBorrowingFee", args: [borrow] });
   const [up, low] = await hints(coll, borrow + 200n * E + fee);
-  vault = getAddress(mine);
-  if (await send("Open loan", { address: vault, abi: vaultAbi, functionName: "openLoan", args: [borrow, res, up, low], value: coll, gas: 3_000_000n })) {
-    await send("Set rule", { address: vault, abi: vaultAbi, functionName: "setRule", args: [16n * 10n ** 17n, 175n * 10n ** 16n, 50n] });
-    $("openBox").style.display = "none"; switchVault(vault);
-  }
+  await send("Open loan", { address: vault, abi: vaultAbi, functionName: "openLoan", args: [borrow, res, up, low], value: coll, gas: 3_000_000n });
 };
 
-
-// ---- owner actions (Wave 2)
-const amt = (id) => { const v = $(id).value.trim(); return v ? parseUnits(v, 18) : 0n; };
-function mPrev() {
-  if (!state.coll || !state.price) return;
-  const b = n(amt("fBtc") || 0n), m = n(amt("fMusd") || 0n), p = n(state.price), c = n(state.coll), d = n(state.debt);
-  const r = (cc, dd) => dd > 0 ? fmt((cc * p / dd) * 100, 1) + "%" : "–";
-  const parts = [];
-  if (b) parts.push(`Add BTC → ${r(c + b, d)}`, `withdraw BTC → ${r(c - b, d)}`);
-  if (m) parts.push(`repay → ${r(c, d - m)}`, `borrow more → about ${r(c, d + m * 1.001)}`);
-  $("mPreview").textContent = parts.length ? "New ratio: " + parts.join(" · ") : "\u00a0";
+/* ---------------- step 3: rule ---------------- */
+document.querySelectorAll(".preset").forEach((b) => b.onclick = () => {
+  const [t, g] = b.dataset.p.split(","); $("fTrig").value = t; $("fTgt").value = g;
+  document.querySelectorAll(".preset").forEach((x) => x.classList.toggle("on", x === b));
+});
+async function saveRule(tv, gv, fv) {
+  if (!(tv >= 115)) return toast("Rescue line must be at least 115%.");
+  if (!(gv > tv)) return toast("Target must be above the rescue line.");
+  if (!(fv >= 0 && fv <= 2)) return toast("Fee can be 0% to 2%.");
+  return send("Save rule", { address: vault, abi: vaultAbi, functionName: "setRule", args: [parseUnits(String(tv / 100), 18), parseUnits(String(gv / 100), 18), BigInt(Math.round(fv * 100))] });
 }
-["fBtc", "fMusd"].forEach((id) => $(id).addEventListener("input", mPrev));
-const needAmt = (x) => { if (x === 0n) { toast("Enter an amount."); return false; } return true; };
-const safeAfter = (cc, dd) => dd === 0n || (cc * state.price) / dd >= 115n * 10n ** 16n;
+$("saveRule").onclick = () => saveRule(Number($("fTrig").value), Number($("fTgt").value), Number($("fFee").value));
 
-$("addBtcBtn").onclick = async () => {
-  const a = amt("fBtc"); if (!needAmt(a)) return;
-  const [up, low] = await hints(state.coll + a, state.debt);
-  await send("Add BTC", { address: vault, abi: vaultAbi, functionName: "addCollateral", args: [up, low], value: a, gas: 3_000_000n });
-};
-$("wBtcBtn").onclick = async () => {
-  const a = amt("fBtc"); if (!needAmt(a)) return;
-  if (a >= state.coll || !safeAfter(state.coll - a, state.debt)) return toast("That would push the loan under 115%. Withdraw less.");
-  const [up, low] = await hints(state.coll - a, state.debt);
-  await send("Withdraw BTC", { address: vault, abi: vaultAbi, functionName: "withdrawCollateral", args: [a, up, low], gas: 3_000_000n });
-};
-$("repayBtn").onclick = async () => {
-  const a = amt("fMusd"); if (!needAmt(a)) return;
-  if (a > state.reserve) return toast("The reserve doesn't hold that much.");
-  if (state.debt - a < 2000n * E) return toast("Mezo keeps at least 2,000 MUSD of debt. Repay less, or close the loan.");
-  const [up, low] = await hints(state.coll, state.debt - a);
-  await send("Repay", { address: vault, abi: vaultAbi, functionName: "repayFromReserve", args: [a, up, low], gas: 3_000_000n });
-};
-$("wResBtn").onclick = async () => {
-  const a = amt("fMusd"); if (!needAmt(a)) return;
-  if (a > state.reserve) return toast("The reserve doesn't hold that much.");
-  if (!confirm(`Withdraw ${fmt(n(a))} MUSD? A smaller reserve means less rescue room.`)) return;
-  await send("Withdraw reserve", { address: vault, abi: vaultAbi, functionName: "withdrawReserve", args: [a] });
-};
-$("borrowBtn").onclick = async () => {
-  const a = amt("fMusd"); if (!needAmt(a)) return;
-  const fee = await pub.readContract({ address: M.bo, abi: boAbi, functionName: "getBorrowingFee", args: [a] });
-  if (!safeAfter(state.coll, state.debt + a + fee)) return toast("That would push the loan under 115%. Borrow less.");
-  const [up, low] = await hints(state.coll, state.debt + a + fee);
-  await send("Borrow more", { address: vault, abi: vaultAbi, functionName: "borrowMore", args: [a, up, low], gas: 3_000_000n });
-};
-$("closeBtn").onclick = async () => {
-  const need = state.debt - 200n * E;
-  const short_ = need > state.reserve ? need - state.reserve : 0n;
-  if (!confirm(`Close the loan? Repays ${fmt(n(need), 0)} MUSD and returns all BTC and leftover MUSD to you.`)) return;
-  if (short_ > 0n) {
-    const bal = await pub.readContract({ address: M.musd, abi: erc20, functionName: "balanceOf", args: [account] });
-    if (bal < short_) return toast(`You need ${fmt(n(short_), 0)} more MUSD in your wallet to close.`, 6000);
-    const al = await pub.readContract({ address: M.musd, abi: erc20, functionName: "allowance", args: [account, vault] });
-    if (al < short_ && !(await send("Approve MUSD", { address: M.musd, abi: erc20, functionName: "approve", args: [vault, short_] }))) return;
-    if (!(await send("Move MUSD in", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [short_] }))) return;
+/* ---------------- step 4: reserve ---------------- */
+function depPreview() {
+  if (!state) return;
+  const need = fullRescueNeed(state), after = n(state.reserve) + n(val("fDep"));
+  $("depPreview").innerHTML = need ? `Reserve after: <b>${fmt(after, 0)}</b> MUSD, ${after >= need ? "<b>covers a full rescue ✓</b>" : `<b>${fmt((after / need) * 100, 0)}%</b> of one rescue`}` : "&nbsp;";
+}
+$("fDep").addEventListener("input", depPreview);
+async function deposit(a) {
+  if (!a) return toast("Enter an amount.");
+  const bal = await pub.readContract({ address: M.musd, abi: erc20, functionName: "balanceOf", args: [account] });
+  if (bal < a) return toast(`Your wallet has ${fmt(n(bal))} MUSD.`);
+  if (!(await approveIfNeeded(a))) return;
+  return send("Top up reserve", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [a] });
+}
+$("depBtn").onclick = () => wallet ? deposit(val("fDep")) : walletSheet();
+
+/* ---------------- manage sheets ---------------- */
+function actionSheet({ title, desc, unit, max, preview, cta, red, run, noInput }) {
+  openSheet(`<h2>${title}</h2><p class="note">${desc}</p>
+    ${noInput ? "" : `<div class="field"><div class="inp"><input id="shIn" inputmode="decimal" placeholder="0.0" autofocus /><small>${unit}</small>${max != null ? `<button class="max" id="shMax">MAX</button>` : ""}</div></div>`}
+    <div class="preview" id="shPrev">${noInput && preview ? preview(0n) : "&nbsp;"}</div>
+    <button id="shGo" class="${red ? "danger" : ""}">${cta}</button>
+    <button class="ghost" style="margin-top:8px" id="shNo">Cancel</button>`);
+  $("shNo").onclick = closeSheet;
+  if (!noInput) {
+    const upd = () => { const a = val("shIn"); $("shPrev").innerHTML = a && preview ? preview(a) : "&nbsp;"; };
+    $("shIn").addEventListener("input", upd);
+    if (max != null) $("shMax").onclick = () => { $("shIn").value = formatUnits(max, 18); upd(); };
   }
-  await send("Close loan", { address: vault, abi: vaultAbi, functionName: "closeLoan", gas: 3_000_000n });
-};
-$("claimBtn").onclick = () => send("Claim BTC", { address: vault, abi: vaultAbi, functionName: "claimCollateral", gas: 1_000_000n });
+  $("shGo").onclick = async () => {
+    const a = noInput ? 0n : val("shIn");
+    if (!noInput && !a) return toast("Enter an amount.");
+    $("shGo").disabled = true; closeSheet(); await run(a);
+  };
+}
 
+const ACTIONS = {
+  addBtc: () => actionSheet({ title: "Add BTC", desc: "More collateral lifts your ratio. Anyone can add BTC to any vault.", unit: "BTC",
+    preview: (a) => `New ratio: <b>${ratioAfter(state.coll + a, state.debt)}</b>`, cta: "Add BTC",
+    run: async (a) => { const [u, l] = await hints(state.coll + a, state.debt); await send("Add BTC", { address: vault, abi: vaultAbi, functionName: "addCollateral", args: [u, l], value: a, gas: 3_000_000n }); } }),
+  deposit: () => actionSheet({ title: "Top up reserve", desc: "MUSD from your wallet goes into the vault, ready for rescues.", unit: "MUSD",
+    preview: (a) => `Reserve after: <b>${fmt(n(state.reserve + a), 0)}</b> MUSD`, cta: "Top up", run: deposit }),
+  repay: () => actionSheet({ title: "Repay from reserve", desc: "Use the reserve to pay down debt yourself, with no keeper fee. Mezo keeps at least 2,000 MUSD of debt.", unit: "MUSD",
+    max: (() => { const room = state.debt > 2000n * E ? state.debt - 2000n * E : 0n; return room < state.reserve ? room : state.reserve; })(),
+    preview: (a) => `New ratio: <b>${ratioAfter(state.coll, state.debt - a)}</b> · reserve left ${fmt(n(state.reserve - a), 0)}`, cta: "Repay",
+    run: async (a) => {
+      if (a > state.reserve) return toast("The reserve doesn't hold that much.");
+      if (state.debt - a < 2000n * E) return toast("That would take debt under 2,000 MUSD. Repay less, or close the loan.");
+      const [u, l] = await hints(state.coll, state.debt - a);
+      await send("Repay", { address: vault, abi: vaultAbi, functionName: "repayFromReserve", args: [a, u, l], gas: 3_000_000n });
+    } }),
+  rule: () => {
+    openSheet(`<h2>Change rescue rule</h2><p class="note">A keeper repays from your reserve when the ratio falls below the rescue line.</p>
+      <div class="two"><div class="field"><label>Rescue below</label><div class="inp"><input id="rT" inputmode="decimal" value="${fmt(state.trig * 100, 0)}" /><small>%</small></div></div>
+      <div class="field"><label>Repay back to</label><div class="inp"><input id="rG" inputmode="decimal" value="${fmt(state.tgt * 100, 0)}" /><small>%</small></div></div></div>
+      <div class="field"><label>Keeper fee</label><div class="inp"><input id="rF" inputmode="decimal" value="${fmt(state.fee / 100, 2)}" /><small>%</small></div></div>
+      <button id="rGo">Save rule</button><button class="ghost" style="margin-top:8px" id="rNo">Cancel</button>`);
+    $("rNo").onclick = closeSheet;
+    $("rGo").onclick = () => { const t = Number($("rT").value), g = Number($("rG").value), f = Number($("rF").value); closeSheet(); saveRule(t, g, f); };
+  },
+  borrow: () => actionSheet({ title: "Borrow more MUSD", desc: "New MUSD goes to your wallet. Mezo adds a small borrowing fee.", unit: "MUSD",
+    preview: (a) => `New ratio: about <b>${ratioAfter(state.coll, state.debt + a + a / 1000n)}</b>`, cta: "Borrow",
+    run: async (a) => {
+      const fee = await pub.readContract({ address: M.bo, abi: boAbi, functionName: "getBorrowingFee", args: [a] });
+      if (!safeAfter(state.coll, state.debt + a + fee)) return toast("That would push the loan under 115%. Borrow less.");
+      const [u, l] = await hints(state.coll, state.debt + a + fee);
+      await send("Borrow more", { address: vault, abi: vaultAbi, functionName: "borrowMore", args: [a, u, l], gas: 3_000_000n });
+    } }),
+  wBtc: () => actionSheet({ title: "Withdraw BTC", desc: "BTC goes back to your wallet. Your ratio has to stay above 115%.", unit: "BTC",
+    preview: (a) => `New ratio: <b>${ratioAfter(state.coll - (a > state.coll ? state.coll : a), state.debt)}</b>`, cta: "Withdraw",
+    run: async (a) => {
+      if (a >= state.coll || !safeAfter(state.coll - a, state.debt)) return toast("That would push the loan under 115%. Withdraw less.");
+      const [u, l] = await hints(state.coll - a, state.debt);
+      await send("Withdraw BTC", { address: vault, abi: vaultAbi, functionName: "withdrawCollateral", args: [a, u, l], gas: 3_000_000n });
+    } }),
+  wRes: () => actionSheet({ title: "Withdraw reserve", desc: "MUSD goes back to your wallet. A smaller reserve means less rescue room.", unit: "MUSD", max: state.reserve,
+    preview: (a) => `Reserve left: <b>${fmt(n(state.reserve - (a > state.reserve ? state.reserve : a)), 0)}</b> MUSD`, cta: "Withdraw",
+    run: async (a) => { if (a > state.reserve) return toast("The reserve doesn't hold that much."); await send("Withdraw reserve", { address: vault, abi: vaultAbi, functionName: "withdrawReserve", args: [a] }); } }),
+  close: () => {
+    const need = state.debt > 200n * E ? state.debt - 200n * E : 0n;
+    const gap = need > state.reserve ? need - state.reserve : 0n;
+    actionSheet({ title: "Close loan", noInput: true, red: true, cta: "Close loan",
+      desc: `Repays ${fmt(n(need), 0)} MUSD (Mezo refunds its 200 MUSD deposit). All ${fmt(n(state.coll), 4)} BTC and any leftover MUSD come back to you.`,
+      preview: () => gap > 0n ? `Your reserve is <b>${fmt(n(gap), 2)} MUSD short</b>. That much moves in from your wallet first.` : "Your reserve covers it ✓",
+      run: async () => {
+        if (gap > 0n) {
+          const bal = await pub.readContract({ address: M.musd, abi: erc20, functionName: "balanceOf", args: [account] });
+          if (bal < gap) return toast(`You need ${fmt(n(gap - bal), 0)} more MUSD in your wallet to close.`, 7000);
+          if (!(await approveIfNeeded(gap))) return;
+          if (!(await send("Move MUSD in", { address: vault, abi: vaultAbi, functionName: "depositReserve", args: [gap] }))) return;
+        }
+        await send("Close loan", { address: vault, abi: vaultAbi, functionName: "closeLoan", gas: 3_000_000n });
+      } });
+  },
+  claim: () => actionSheet({ title: "Claim leftover BTC", noInput: true, cta: "Claim", desc: "If Mezo liquidated or redeemed this loan, any BTC left over is waiting for you.",
+    run: () => send("Claim BTC", { address: vault, abi: vaultAbi, functionName: "claimCollateral", gas: 1_000_000n }) }),
+};
+document.querySelectorAll(".act").forEach((b) => b.onclick = () => {
+  if (!state) return;
+  if (!wallet) return walletSheet();
+  if (b.classList.contains("own") && !isOwner()) return toast("Only the vault owner can do that.");
+  ACTIONS[b.dataset.a]();
+});
+
+/* ---------------- rescue + lookup ---------------- */
+$("rescueBtn").onclick = async () => {
+  if (!wallet) return walletSheet();
+  const [, , repay] = state.prev;
+  const [u, l] = await hints(state.coll, state.debt - repay);
+  await send("Rescue", { address: vault, abi: vaultAbi, functionName: "rescue", args: [u, l], gas: 3_000_000n });
+};
 $("lookup").onsubmit = (ev) => { ev.preventDefault(); const v = $("vaultIn").value.trim(); if (!isAddress(v)) return toast("That isn't a valid address."); switchVault(v); };
 
-if (window.ethereum) window.ethereum.on?.("accountsChanged", () => location.reload());
-refresh(true).then(openPreview);
+/* ---------------- boot ---------------- */
+refresh(true);
 setInterval(() => refresh(false), 20000);
 setInterval(() => loadFeed(), 60000);
+// reconnect silently if the wallet already trusts this site
+setTimeout(async () => {
+  const p = [...found.values()][0]?.provider || window.ethereum;
+  if (!p) return;
+  try { const accs = await p.request({ method: "eth_accounts" }); if (accs?.length) connect(p); } catch {}
+}, 400);
 </script>
 </body>
 </html>
