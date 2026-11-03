@@ -78,6 +78,7 @@
   /* banner */
   .banner { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mute); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
   .banner b { color: var(--ink); }
+  .banner.warnb { border: 1px solid #6b5216; background: rgba(242,193,78,.08); color: var(--ink); }
 
   /* tabs */
   .tabs { position: sticky; top: 58px; z-index: 4; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
@@ -210,6 +211,7 @@
     </div>
   </section>
 
+  <div class="banner warnb hide" id="netBanner"><div style="flex:1">Your wallet is on <b>another network</b>. Bulwark runs on Mezo Testnet.</div><button class="sm" id="netBtn">Switch to Mezo</button></div>
   <div class="banner hide" id="demoBanner"><div>You're viewing <b>a demo vault</b>. Connect your wallet to see or open your own.</div></div>
 
   <nav class="tabs" id="tabs">
@@ -398,14 +400,31 @@ function walletSheet() {
   $("copyLink").onclick = async () => { try { await navigator.clipboard.writeText(location.href); toast("Link copied. Paste it into your wallet's browser."); } catch { toast(location.href, 8000); } };
 }
 
+const MEZO_ID = "0x7b7b";
+const MEZO_PARAMS = { chainId: MEZO_ID, chainName: "Mezo Testnet", nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 }, rpcUrls: ["https://rpc.test.mezo.org"], blockExplorerUrls: [EXP] };
+const errCode = (e) => e?.code ?? e?.data?.originalError?.code ?? e?.cause?.code;
+const onMezo = async (p) => { try { return parseInt(await p.request({ method: "eth_chainId" }), 16) === 31611; } catch { return false; } };
 async function ensureChain(p) {
-  try { await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x7b7b" }] }); }
+  if (await onMezo(p)) { setNet(true); return true; }
+  try { await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: MEZO_ID }] }); }
   catch (e) {
-    if (e.code === 4902 || e.code === -32603 || /Unrecognized|not been added|Unknown chain/i.test(e.message || "")) {
-      await p.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x7b7b", chainName: "Mezo Testnet", nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 }, rpcUrls: ["https://rpc.test.mezo.org"], blockExplorerUrls: [EXP] }] });
-    } else throw e;
+    if (errCode(e) === 4001) { setNet(false); throw new Error("You declined the switch to Mezo Testnet."); }
+    // chain not added yet (4902, or -32603 on MetaMask mobile): add it, which also switches
+    try { await p.request({ method: "wallet_addEthereumChain", params: [MEZO_PARAMS] }); }
+    catch (e2) { setNet(false); throw new Error(errCode(e2) === 4001 ? "You declined adding Mezo Testnet." : "Couldn't switch your wallet to Mezo Testnet."); }
   }
+  for (let i = 0; i < 10 && !(await onMezo(p)); i++) await new Promise((r) => setTimeout(r, 300));
+  const ok = await onMezo(p); setNet(ok);
+  if (!ok) throw new Error("Your wallet is still on another network. Tap Switch to Mezo.");
+  return true;
 }
+function setNet(ok) {
+  const btn = $("connect");
+  if (!account) return;
+  if (ok) { btn.textContent = short(account); btn.className = "sm ghost"; $("netBanner").classList.add("hide"); }
+  else { btn.textContent = "Switch to Mezo"; btn.className = "sm"; $("netBanner").classList.remove("hide"); }
+}
+async function switchNow() { try { await ensureChain(provider); toast("You're on Mezo Testnet ✓"); refresh(true); } catch (e) { toast(e.shortMessage || e.message, 6000); } }
 
 async function connect(p) {
   closeSheet();
@@ -413,11 +432,11 @@ async function connect(p) {
     provider = p;
     [account] = await p.request({ method: "eth_requestAccounts" });
     account = getAddress(account);
-    await ensureChain(p);
     wallet = createWalletClient({ chain: CHAIN, transport: custom(p), account });
     p.on?.("accountsChanged", () => location.reload());
-    p.on?.("chainChanged", () => location.reload());
+    p.on?.("chainChanged", (id) => setNet(parseInt(id, 16) === 31611));
     $("connect").textContent = short(account); $("connect").className = "sm ghost";
+    ensureChain(p).catch((e) => toast(e.shortMessage || e.message, 6000));
     const mine = await pub.readContract({ address: FACTORY, abi: factoryAbi, functionName: "vaultOf", args: [account] });
     myVault = mine === ZERO ? null : getAddress(mine);
     if (myVault) { vault = myVault; history.replaceState(null, "", "?vault=" + vault); toast("Connected. Showing your vault."); }
@@ -425,7 +444,8 @@ async function connect(p) {
     await refresh(true);
   } catch (e) { toast(e.shortMessage || e.message || "Connection failed", 6000); }
 }
-$("connect").onclick = $("st1b").onclick = () => account ? toast("Connected as " + short(account)) : walletSheet();
+$("connect").onclick = $("st1b").onclick = async () => { if (!account) return walletSheet(); if (!(await onMezo(provider))) return switchNow(); toast("Connected as " + short(account)); };
+$("netBtn").onclick = switchNow;
 
 /* ---------------- sheet ---------------- */
 function openSheet(html) { $("sheetBody").innerHTML = html; $("sheetRoot").classList.add("open"); }
@@ -611,7 +631,7 @@ document.querySelectorAll("#tabs button").forEach((b) => b.onclick = () => tab(b
 async function send(label, req) {
   if (!wallet) { walletSheet(); return false; }
   try {
-    await ensureChain(provider);
+    if (!(await onMezo(provider))) await ensureChain(provider);
     toast(label + ": confirm in your wallet…", 60000);
     const hash = await wallet.writeContract({ ...req, account, chain: CHAIN });
     toast(label + ": waiting for Mezo…", 60000);
