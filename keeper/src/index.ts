@@ -100,7 +100,10 @@ async function hintsFor(coll: bigint, newDebt: bigint): Promise<[Address, Addres
   return [up, low];
 }
 
-const warned = new Set<string>();
+/** Ratio at the last warning per vault. A new warning only fires after a further real drop,
+ *  and the warning re-arms only once the loan is clearly back above the warn zone (no flapping). */
+const warned = new Map<string, bigint>();
+const WARN_STEP = 3n * 10n ** 16n; // 3 percentage points
 /** Vaults below their line that can't be rescued (empty reserve); alerted once until fixed. */
 const stuck = new Set<string>();
 
@@ -200,10 +203,11 @@ async function checkVault(vault: Address) {
     stuck.delete(key);
     // Warn when the loan drifts toward its trigger, but never right after a rescue left it at its target.
     const near = icr < BigInt(trigger) + warnMargin && icr < BigInt(target) - 5n * 10n ** 15n;
-    if (near && icr > 0n && !warned.has(key)) {
-      warned.add(key);
+    const last = warned.get(key);
+    if (near && icr > 0n && (last === undefined || icr <= last - WARN_STEP)) {
+      warned.set(key, icr);
       await telegram(`⚠️ Bulwark vault ${short(vault)} is at ${pct(icr)}, close to its ${pct(BigInt(trigger))} rescue line.`, vault);
-    } else if (icr >= BigInt(trigger) + warnMargin) {
+    } else if (icr >= BigInt(trigger) + warnMargin + WARN_STEP) {
       warned.delete(key);
     }
     return;
@@ -242,7 +246,7 @@ async function watchRescues(vaults: readonly Address[]) {
   lastBlock = head;
   for (const l of logs) {
     const { keeper, icrBefore, icrAfter, repaid, fee } = l.args as { keeper: Address; icrBefore: bigint; icrAfter: bigint; repaid: bigint; fee: bigint };
-    warned.add(l.address.toLowerCase());
+    warned.set(l.address.toLowerCase(), icrAfter);
     const by = keeper.toLowerCase() === account.address.toLowerCase() ? "this keeper" : short(keeper);
     log(`rescued ${l.address}: ${pct(icrBefore)} -> ${pct(icrAfter)}, repaid ${musd(repaid)}, fee ${musd(fee)} to ${by}, tx ${l.transactionHash}`);
     await telegram(
